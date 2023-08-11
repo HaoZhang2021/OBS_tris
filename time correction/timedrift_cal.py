@@ -1,5 +1,5 @@
-#cross-correlation caculation using obspy
-#2021.02
+#ambient nosie cross-correlation using obspy
+#for time drift calculation
 
 import os
 import sys
