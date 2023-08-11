@@ -1,0 +1,644 @@
+.\$Id: qedit.man,v 1.8 2004/02/07 00:42:12 doug Exp $ 
+.TH QEDIT 1 "20 January 2004" BDSN
+.SH NAME
+qedit - Edit record header information in miniSEED or Quanterra data files
+.SH SYNOPSIS
+.B qedit
+[\ \fB\-f\ \fIdate_time\fR\ ]
+[\ \fB\-t\ \fIdate_time\fR\ ]
+[\ \fB\-s\ \fItime_span\fR ]
+[\ \fB\-d\ \fInum\fR\ ]
+[\ \fB\-D\ j\ |\ m\fR\ ]
+[\ \fB\-h\fR\ ]
+\fIinput_file\fR [\fI output_file\fR]
+.br
+.SH DESCRIPTION
+The program
+.B qedit
+is an interactive editor for the data record headers for Quanterra data files.
+It can edit files of the following formats:
+SEED Data Record  (512 byte or 4K byte records), Adebahr DRM files, or files with
+Quanterra internal headers (512 byte or 4K byte records).
+All data is assumed to be in Steim-1 compressed data frames.
+
+.SH OPTIONS
+.TP
+\fB\-f \fIdate_time\fR
+.br
+specifies a beginning (from) time window for which data is desired.  
+All records that span data before this time will be ignored.
+.TP  
+\fB\-t \fIdate_time\fR
+.br
+specifies an end (to) time window for which data is desired.  
+Any data record that starts at or after this time will be ignored.
+The \"to\" date_time is non-inclusive, so that data
+will be read up to (but not including) the first record that has beginning
+time of >= the specified time.  The format for specifying the \fBto\fR and \fBfrom\fR
+date_times are:
+.nf
+        yyyy/mm/dd/hh:mm:ss.ffff
+        yyyy/mm/dd.hh:mm:ss.ffff
+        yyyy/mm/dd,hh:mm:ss.ffff
+        yyyy.ddd.hh:mm:ss.ffff
+        yyyy.ddd,hh:mm:ss.ffff
+        yyyy,ddd,hh:mm:ss.ffff
+.fi
+where the first format specifies the year, month, day, and time, and the
+second format specifies year, julian day (day of year), and time.  
+All trailing components of the date_time are optional, and if not specified, 
+are assumed to be 0.
+.TP
+\fB\-s \fItime_span\fR
+specifies a time_span (duration) in either seconds, minutes, hours, or days,
+and is an alternate way of specifying the end of a time interval.
+The time_span is an integer followed immediately by the character 
+\fBS\fR, \fBM\fR, \fBH\fR, or \fBd\fR for seconds, minutes, hours, or days 
+respectively.  If no character is specified, 
+seconds are assumed.  This option is mutually exclusive with the \fI-t\fR 
+option, and can only be used in conjucntion with the \fI-f\fR option.
+.TP
+\fB\-d \fInum\fR
+specifies debugging information should be displayed.  Current debugging
+options are:
+.nf
+.ta 1.0i
+	1 for time slew
+	2 for complete time info
+	4 for record info
+	8 for record headers
+	16 for flag info
+.fi
+.ad
+Multiple debugging options can be specified by adding the appropriate values
+together.
+.TP
+\fB\-D\ j\ |\ m\fR 
+specifies that dates should be displayed in either julian (day_of_year) or
+month format.  The default is julian format.
+.TP
+.B \-h
+print out a simple help message with syntax and description of the options.
+.TP
+\fIinput_file\fR
+.br
+specifies the input data file to be edited.  An input file must be specified.
+.TP
+[\fIoutput_file\fR]
+.br
+specifies the default name of the output file to be written.  
+If no file is specified, the default output filename is assumed to be the same as
+the input file.  However, if you do not explicitly specify the output
+filename, you will be prompted for verification when you write the output
+file.  This is a safety feature to prevent you from accidentally overwriting
+your input file.
+.SH OPERATION
+Qedit reads the input file or the specified portion of it into memory.  It
+maps the DRM records or SEED Data Record headers into a uniform record
+header that contains virtually all of the record header information, and
+allows the user to view and modify all non-fixed fields of this header.
+This data record header, and the data associated with it, is referred to as
+a "record".
+
+Although qedit can be used to edit files containing multiple SEED data channels,
+the program is most useful for editing files with a single SEED data channel.
+If you have a file containing block-multiplex channels (like those
+acquired by the Quanterra dialup system) you may first demultiplex it
+using the
+.B sdrsplit
+command, and then edit each channel separately.
+
+The editor works very much like standard line-oriented editors.  The editor
+maintains the concept of the "current record", and commands are designed to
+work with (or from) the current record.  Certain command, such as "del",
+"find", "first", and "last" cause the current record to move.
+
+In addition, each command can be prefixed with a range prefix:
+.nf
+.BI	from\  <start>\  to\  <stop>
+or
+.BI	from\  <start>\  thru\  <stop>
+.fi
+where 
+.I <start>
+and
+.I <stop>
+can be either a record number, a date_time, or a record position keyword
+\fBfirst\fR, \fBcurrent\fR, or \fBlast\fR.
+This allow the following command to operate on a range of data record headers.
+
+.B PLEASE NOTE:
+.br
+A range that is delineated by the 
+.B thru
+keyword keyword specifies a closed interval:  eg the range:
+.nf
+.BR	from\  10\  thru\  20
+.fi
+specifies that the following operation should be performed starting at record
+10 and should continue through and including record 20.
+
+A range that is delineated by the
+.B to
+keyword, or a range that is terminated with a date_time specifies a 
+half-open interval:  eg the
+range
+.nf	
+.BR	from\  1992.123,11:00\  to\  1992.123,12:00
+.fi
+specifies that the following operation should be performed starting at the
+record containing data for the date_time 1992.123,11:00, and should continue
+to, but NOT including the date_time 1992.123,12:00.  If the end date_time
+1992.123,12:00 is the date_time of the BEGINNING of a record, the operation
+WILL NOT BE PERFORMED ON THAT RECORD.  This is consistent with the date_time
+interval options for other commands that process Quanterra data, and allows
+you to specify a date_time interval (such as 1 day) using the syntax:
+.nf
+.BR	from\  1992.123,00:00\  to\  1992.124,00:00
+.fi
+
+When a date_time is used to specify an endpoint of a range, it is compared
+to the beginning time of the record (which may include a time correction), NOT
+the header time of the record, which does not include any time correction
+field.
+
+When using a range prefix, 
+.B qedit
+will attempt to move the current record to the record specified by the
+.B from
+field.  If it is not successful, the command will fail and the current
+record will remain unchanged.  If it is successful, the command will be
+executed on this header.  If the end range has not been satisfied, the
+current record will be advanced to the next record, and the command will be
+executed again.  This will continue until the 
+.B to
+condition has been met, the command fails, or the end-of-records is reached.
+If the command was successful, the current record will be left where the
+execution of the command on that final record would normally leave the
+current record.
+.SH COMMANDS
+The following is a list of \fBqedit\fR commands.  Each command may begin
+with a range prefix.
+.TP
+.B quit
+.br
+Quit the program.  Any changes made since the previous write will not be
+written to the output file.
+.TP
+\fBwrite\fR  [output_file]
+.br
+Write the current edit session to an output file.  If an output_file is
+specified on the write line, write to this file.  Otherwise, if an
+output_file was specified on the qedit command line, write to that file.
+Otherwise, overwrite the original input file, but query the user about
+overwriting the file.
+
+.B BEWARE:
+If you are editing only a portion of a file (by having specified the -f, -t
+or -s comamnd line options), the output file will have only this edited
+portion of data.  In particular, if you edit a portion of a file and then
+write to the same file, the ENTIRE CONTENTS of the original file will be
+overwritten by the edited portion of the file.
+.TP
+\fBfile\fR  [output_file]
+.br
+Write the output file and then quit.  See the write command for details.
+.TP
+\fBhelp\fR  [command]
+.br
+Print brief help the specified command, or for all commands if no command is
+specified.
+.TP
+\fBauto off | on | all\fR
+.br
+Specify whether the current record should be automatically displayed after
+each command that modifies the current record or moves the current record
+pointer.  
+.B off
+specifies that the current record should not be displayed.
+.B on
+specifies that the current record should be displayed after the command has
+finished executing.
+.B all
+specifies that the current record should be displayed after each iteration of
+a command.
+.TP
+\fBfirst | top\fR
+.br
+Position the current record pointer to the top of the data stream, i.e. the
+first data record. 
+.TP
+\fBlast | bot\fR
+.br
+Position the current record pointer to the bottom of the data strea, i.e. last
+data record. 
+.TP
+\fBfind rec\fR record_number
+\fBfind recno\fR record_number
+\fBfind blk\fR record_number
+.br
+Find the record with the specified record number, starting from the the first record.
+If the record is not found, do not move the current record pointer.
+Each record is assigned a unique record number starting with 1 when the file
+is initially read.  The records are NOT renumbered when a record is deleted.
+.TP
+\fBfind seq\fR sequence_number
+.br
+Find the record with the specified sequence number, starting at the current record.
+If the record is not found, current record pointer will not be moved.
+If there is more than 1 record with the specified sequence number, it will
+find the NEXT record in the file with that sequence number.
+.TP
+\fBfind hdrtime\fR date_time
+.br
+Find the record with the specified header time, starting with the first
+record.  The specified date_time must match the record header time EXACTLY.
+If no matching record is found, the current record pointer will not be moved.
+.TP
+\fBfind begtime\fR date_time
+.br
+Find the record with specified begin time, starting with the first record.
+The begin time is defined as the header time plus any clock correction that
+has not already been added to the header time.  The specified date_time must
+match the begin time exactly.  If no matching record is found, the current
+record pointer will not be moved.
+.TP
+\fBfind time\fR date_time
+.br
+Find a record that contains the specified date_time, starting with the first
+record.  The date_time does not have to match the header time, but must
+merely be in the half-open interval [begin_time, end_time+1_point).  If
+there is more than one record that contains the specified date_time due to
+time overlaps, it will find the FIRST record in the file containing that
+time.  If no matching record is found, the current record pointer will not be
+moved.
+.TP
+\fBfind tear\fR num_ticks
+.br
+Find the next time tear (gap or time overlap) that is greater than or equal
+to num_tics, starting at the current record.  If a time tear is found, the
+current record pointer will point to the record AFTER the tear.  If no time
+tear of this size is found, the current record pointer will not be moved.
+.TP
+\fBnext\fR [N] | \fBfor\fR  [N]
+.br
+Advance the current record pointer forward by N records.  The default is 1 record.
+.TP
+\fBprev\fR [n] | \fBback\fR [n]
+Back up the current record pointer by N records.  The default is 1 record.
+.TP
+\fBdisp\fR
+.br
+Display the current record header information.
+.TP
+\fBdisp str\fR
+.br
+Display the current stream information from the input file.
+.TP
+\fBdel\fR  [N]
+.br
+Delete the next N records, starting with the current record.
+The default is 1 record.
+.TP
+\fBlimit corr\fr N
+Limit the resolution of time corrections made via add_trend to N ticks.
+A value of 10 limits corrections to 1 msec.
+.TP
+\fBlimit mingap\fr N
+Limit the minimum timegap corrected by the tcorr command to N ticks.
+A value of 10 limits corrections to 1 msec.
+.TP
+\fBlimit maxgap\fr N
+Limit the maximum timegap corrected by the tcorr command to N ticks.
+A value of 10000 limits corrections to 1 sec.
+.TP
+\fBset station\fR new_station
+.br
+Set the station name to new_station in the current record.
+.TP
+\fBset net\fR new_network
+.br
+Set the network name to new_network in the current record.
+You may use the string "-" or "--" to indicate a blank (empty)
+location code.
+.TP
+\fBset chan\fR new_channel
+.br
+Set the channel name to new_channel in the current record.
+.TP
+\fBset loc\fR new_location
+.br
+Set the location to new_location in the current record.
+You may use the string "-" or "--" to indicate a blank (empty)
+location code.
+.TP
+\fBset rectype\fR new_record_type
+.br
+Set the record_type data quality field to new_record_type 
+in the current record.
+Valid record types are:
+.nf
+.ta 0.5i
+	D = Undetermined data quality (backwards compatible).
+	R = Raw or Real-time data with no Quality Control.
+	Q = QC-ed data processed by some Quality control procedure.
+.fi
+.ad
+.TP
+\fBset nsamples\fR value
+.br
+Set the nsamples field in the current record to value.
+.TP
+\fBset rate\fR N
+.br
+Set the sample rate to integer value N.  Note that the sample rate is an
+integer.  A positive integer represents samples/second.  A negative integer
+represents (-1*seconds/samples).  The SEED header fields sample_rate_factor
+and sample_rate_multiplier will be generated from this value by a simplistic
+formula.
+.TP
+\fBset seq\fR N
+.br
+Set the sequence number of the record to the integer value N.
+.TP
+\fBset corr\fR N
+.br
+Set the time_correction field to integer value N.  Note that for SEED
+headers this represents ticks (1/10 msec).  Setting the correction field
+will NOT implicitly change bit 1 of the Activity flag.  
+
+NOTE:  If the APPARENT_TIME_GAP bit in the aflags field is NOT set, the
+time_correction will be added to the hdr_time field when calculating the
+beginning time of the packet.  If the APPARENT_TIME_GAP bit is set, the
+time_correction field will NOT be added to the hdr_time field when
+calculating the beginning time of the packet.  In most circumstances, if you
+are setting the time_correction field to correct an incorrect hdr_time, you
+should ensure that the APPARENT_TIME_GAP bit is NOT set (eg cleared) in the
+record BEFORE setting the time_correction field.  Otherwise, the beginning
+time of the packet MAY NOT be recalculated to include the time_correction.
+.TP
+\fBset aflags\fR H
+.br
+Set the aflags field to hex value H.
+.TP
+\fBset ioflags\fR H
+.br
+Set the ioflags field to hex value H.
+.TP
+\fBset qflags\fR H
+.br
+Set the qflags field to hex value H.
+.TP
+\fBset x0\fR N
+.br
+Set the X0 field in the STEIM-1 data frame to the integer value N.  Note
+that NO validity checking is done to ensure that the resultant STEIM-1
+frames are internally consistent.
+.TP
+\fBset xn\fR N
+.br
+Set the Xn field in the STEIM-1 data frame to integer value N.  Note that NO
+validity checking is done to ensure that the resultant STEIM-1 frames are
+internally consistent.
+.TP
+\fBsmooth hdrtime\fR
+.br
+Add the appropriate timecorrection to the hdrttime to erase clock jitter.
+This has the effect of removing any time gaps or time slews between adjacent
+data records.  This command is useful in conjunction with the \fBadd_trend\fR
+command to remove clock jump problems and replace the clock jumps with an
+averaged time slew over the affected timespan.
+The absolute value of the smallest correction that can be added is controlled
+by the \fBlimit corr\fR command.
+.TP
+\fBsmooth corr\fR
+.br
+Add the appropriate timecorrection in the time correction field to erase clock jitter.
+This has the effect of removing any time gaps or time slews between adjacent
+data records.  This command is useful in conjunction with the \fBadd_trend\fR
+command to remove clock jump problems and replace the clock jumps with an
+averaged time slew over the affected timespan.
+The absolute value of the smallest correction that can be added is controlled
+by the \fBlimit corr\fR command.
+.TP
+Verify commands:
+.br
+The verify command is used to ensure that the requested field(s) are
+consistent within the specified range of records.
+If no optional value is specified,
+.B qedit ensures that the field values are identical for the specified records.
+If the optional value is specified, 
+.B qedit
+will verify that field(s) in the specified range of records are set to this value.
+.TP
+\fBverify station\fR [station_name]
+.br
+Verify that the station field is consistent within the specified records.
+If station is specified, ensure that the field has this value.
+.TP
+\fBverify loc\fR [location_name]
+.br
+Verify that the location field is consistent within the specified records.
+If location_name is specified, ensure that the field has this value.
+.TP
+\fBverify chan\fR [channel_name]
+.br
+Verify that the channel field is consistent within the specified records.
+If channel_name is specified, ensure that the field has this value.
+.TP
+\fBverify net\fR [network_name]
+.br
+Verify that the network field is consistent within the specified records.
+If network_name is specified, ensure that the field has this value.
+.TP
+\fBverify rectype\fR [record_type]
+.br
+Verify that the rectype field is consistent within the specified records.
+If record_type is specified, ensure that the field has this value.
+.TP
+\fBverify all\fR
+.br
+Verify that all verifiable fields are consistent within the specified record.
+.TP
+\fBadd nsamples\fR N
+.br
+Add the integer value N to the nsamples field.
+.TP
+\fBadd rate\fR N
+.br
+Add the integer value N to the sample rate field.  Note that the sample rate
+is an integer.  A positive integer represents samples/second.  A negative
+integer represents (-1*seconds/samples).  The SEED header fields
+sample_rate_factor and sample_rate_multiplier will be generated from this
+value by a simplistic formula.
+.TP
+\fBadd corr\fR N
+.br
+Add the integer value N to the time_correction field.  Note that for SEED
+headers this represents ticks (1/10 msec).  Setting the correction field
+will NOT implicitly change bit 1 of the Activity flag.  See the \fBset
+corr\fR command for more details.
+.TP
+\fBadd x0\fR N
+.br
+Add the integer value N to the X0 field in the STEIM-1 data frame.  Note
+that NO validity checking is done to ensure that the resultant STEIM-1
+frames are internally consistent.
+.TP
+\fBadd xn\fR N
+.br
+Add the integer value N to the Xn field in the STEIM-1 data frame.  Note
+that NO validity checking is done to ensure that the resultant STEIM-1
+frames are internally consistent.
+.TP
+\fBclear aflags\fR H
+.br
+BitClear the flag bits in the aflags field that correspond to the bits set in
+the hex value N, eg aflags &= ~0xH.
+.TP
+\fBclear ioflags\fR H
+.br
+BitClear the flag bits in the ioflags field that correspond to the bits set in
+the hex value H, eg ioflags &= ~0xH.
+.TP
+\fBclear qflags\fR H
+.br
+BitClear the flag bits in the qflags field that correspond to the bits set in
+the hex value H, eg qflags &= ~0xH.
+.TP
+\fBand aflags\fR <hex>
+.br
+Bitwise AND the flag bits in the aflags field with the specified hex value
+H, eg aflags &= 0xH.
+.TP
+\fBand ioflags\fR H
+.br
+Bitwise AND the flag bits in the ioflags field with the specified hex value
+H, eg ioflags &= 0xH.
+.TP
+\fBand qflags\fR H
+.br
+Bitwise AND the flag bits in the qflags field with the specified hex value
+0xH, eg qflags &= 0xH.
+.TP
+\fBor aflags\fR H
+.br
+Bitwise OR the flag bits in the aflags field with the specified hex value
+0xH, eg aflags |= 0xH.
+.TP
+\fBor ioflags\fR H
+.br
+Bitwise OR the flag bits in the ioflags field with the specified hex value
+0xH, eg ioflags |= 0xH.
+.TP
+\fBor qflags\fR H
+.br
+Bitwise OR the flag bits in the qflags field with the specified hex value
+0xH, eg qflags |= 0xH.
+.TP
+\fBset_time corr\fR time_interval
+.br
+Set the time_correction field to the specified time_interval.  See below for
+valid time_interval formats.  See the \fBset corr\fR command for more details.
+.TP
+\fBset_time hdrtime\fR date_time
+.br
+Set the hdrtime field to the specified date_time.  See below for valid
+date_time formats.
+.TP
+\fBadd_time corr\fR time_interval
+.br
+Add the specified time_interval to the time_correction field.  See below
+for valid time_interval formats.  See the \fBset corr\fR command for more details.
+.TP
+\fBadd_time hdrtime\fR time_interval
+.br
+Add the specified time_interval to the hdrtime field.  See below for valid
+time_interval formats.
+.TP
+\fBadd_time pcf\fR
+.br
+Add the specified time corrections from the previously read PASSACL PCF file
+to the time correction field.
+See the \fBgetpcf\fR command to read the PASSCAL PCF time correction file.
+.TP
+\fBgetpcf pcf_file
+.br
+Read the PASSCAL PCF time correction file.
+.TP
+\fBadd_trend corr\fR initial_time_interval end_time_interval
+.br
+Add a linear time correction whose initial value is initial_time_interval and whose end
+value is end_time_interval to the time_correction field.  Note that this
+only makes sense if you specify a \fBfrom\fR and \fBto\fR range for this
+command.
+.TP
+\fBadd_trend hdrtime\fR initial_time_interval end_time_interval
+.br
+Add a linear time correction whose initial value is initial_time_interval and whose
+end value is end_time_interval to the hdrtime field.  Note that this only
+makes sense if you specify a \fBfrom\fR and \fBto\fR range for this command.
+.TP
+\fBbounds on | off\fR
+.br
+Specifies that bounds for iteration either be within the span of the file,
+or may exceed the span of the file.
+.TP
+\fBapply_corr keep | clear\fR
+.br
+Update the header time by adding the time_correction field to the header
+time. If \fBkeep\fR is specified, keep the value in the time_correction and
+set the time_correction_applied bit in the aflags.  If \fBclear\fR is
+specified, clear the value in the time_correction field.
+.TP
+\fBtcorr hdrtime reftime\fR date_time
+.br
+Correct time gaps with respect to the specified reference time.
+The time correction should be added directly to the hdrtime field.
+.TP
+\fBtcorr corr reftime\fR date_time
+.br
+Correct time gaps with respect to the specified reference time.
+The time correction should be added directly to the time correction field.
+Note that the time correction field is a 32-bit integer in units of ticks
+(1/10,000 second), so it can represent at most +-214,748 seconds.
+.TP
+\fBvolhdr\fR on
+.br
+Create a telemetry volume header for the file if one does not already exist.
+Volume headers can only be created for MiniSEED files.
+.TP
+\fBvolhdr\fR off
+.br
+Delete a telemetry volume header for the file if one exists.
+Volume headers can only be deleted for MiniSEED files.
+.TP
+\fBresequence\fR
+Resequence sequential data record, starting with the initial sequence 1.
+.SH NOTES
+.br
+A date_time field can be specified by one of the following formats:
+.nf
+	yyyy.ddd,HH:MM:SS.FFFF
+	yyyy/mm/dd,HH:MM:SS.FFFF
+.ad
+where yyyy represents the full year, mm
+represents the month (1-12), dd represents the day of month (1-31), ddd
+represents the day_of_year (1-366), HH represents the hour (0-23), MM
+represents the minute (0-59), ss represents the second (0-60), and ffff
+represents the ticks, or fractional part of a second. (1/10 msec).  Trailing
+fields may be left off, and will assumed to be 0.
+
+A time_interval fields can be specified by the following format:
+.nf
+	+-yyyy,+-ddd,+-HH:+-MM:+-SS.+-FFFF 
+.aj
+where +- represents plus or minus (with neither being positive), 
+yyyy is an integer for years, ddd is an integer for days, 
+HH is an integer for hours, MM is an iteger for minutes,
+SS is an integer for seconds, and FFFF is an integer for ticks (1/10 msec).
+Note that unlike dates, 0 is a valid value for days.
+.SH AUTHOR
+Doug Neuhauser, UC Berkeley Seismographic Station, doug@seismo.berkeley.edu
+.SH BUGS
+Report any bugs, problems or suggestion to the author.

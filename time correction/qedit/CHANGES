@@ -1,0 +1,40 @@
+2005/12/13  1.4.20 (2005.347)	Doug Neuhauser
+	Fix "find tear" to not wrap from bottom to top of file.
+2005/10/16  1.4.19 (2005.289)	Doug Neuhauser
+	Fix limit corr command.
+2005/09/04  1.4.18 (2005.247)	Doug Neuhauser
+	Fix limit command (was processing all limits commands as limit corr).
+2005/06/29  1.4.17 (2005.180)	Doug Neuhauser
+	Removed text after "#endif" in get_rate.h
+2005/03/21  1.4.16 (2005.080)	Doug Neuhauser
+	execute.c
+	Fix iteration over "del" command.
+2005/01/08  1.4.15 (2005.008)	Doug Neuhauser
+	parse_cmd.c
+	Explicit null pointer for ARG structure to null for empty optional arg.
+2004/11/07  1.4.14 (2004.312)	Doug Neuhauser
+	do.c
+	Allow value of "-" or "--" for blank string in verify command.
+2004/03/06  1.4.13 (2004.066)	Doug Neuhauser (per ISTI)
+	get_rate.c
+	Change cfree() to free() for MACOSX support.
+2004/02/24  1.4.12 (2004.055)	Doug Neuhauser
+	do.c
+	Fix: Allow value of  "-" or "--" to convert to blank string for
+	network or location code.
+2004/02/06  1.4.11 (2004.037)	Doug Neuhauser
+	do.c
+	Allow value of  "-" or "--" to convert to blank string for
+	network or location code.
+Version 1.3	(1996.026)	Doug Neuhauser, doug@seismo.berkeley.edu
+	Added smooth and limit commands.
+	Added support for seed telemetry VOL8.
+	Addes support for datatype other than Steim-compressed data.
+Version 1.4	(1996.126)	Doug Neuhauser, doug@seismo.berkeley.edu
+	Added support for PASSCAL PCF (time correction files) from Paul Friberg.
+	2 new comamnds:
+		getpcf	<pcf_file>	Read a PASSCAL PCF time correction file.
+		add_time pcf		Add the PASSCAL time corrections to the
+					time correction field.
+2003/05/27
+	Fix write_file.c to add missing argument to strncpy. (Eric Haug, SLU)
