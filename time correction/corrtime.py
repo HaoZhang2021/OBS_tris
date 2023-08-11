@@ -1,4 +1,4 @@
-#correct skew (time drift) of mseed using qedit 
+#correct linear skew (time drift) of mseed using qedit 
 
 import os
 import sys
