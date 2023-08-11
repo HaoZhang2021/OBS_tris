@@ -1,1 +1,1 @@
-# time (skew) calcuation correction for OBS data
+# time (skew) calcuation and correction for OBS data
