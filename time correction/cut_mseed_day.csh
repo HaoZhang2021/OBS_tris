@@ -1,5 +1,5 @@
 #!/bin/csh
-
+#cut whole mseed file into daily files
 
 set x=19
 while ($x<20)
