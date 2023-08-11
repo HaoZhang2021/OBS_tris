@@ -1,0 +1,92 @@
+# GIPPtools - A collection of programs for (seismic) data pre-processing.
+#
+# Copyright (C) 2009-2021 Christof Lendl (GFZ Potsdam, lendl@gfz-potsdam.de)
+#
+# This work is licensed under the Creative Commons Attribution 4.0
+# International License. To view a copy of this license, visit
+# http://creativecommons.org/licenses/by/4.0/./
+#
+# ---------------------------------------------------------------------------
+#                          mseed2mseed - rule file
+# ---------------------------------------------------------------------------
+#
+# Rule files contain simple miniSEED header editing rules in form of an ten
+# column table. Each row defines one additional editing rule. Rule files are
+# fed to the 'mseed2mseed' program via the command line option '--rules'.
+#
+# Note: There is no functional difference between using a rule file containing
+#       a single, ten column table row or giving the ten corresponding options
+#       mentioned above at the command line directly. However, using a rule
+#       file you can define as many editing rules at the same time as the
+#       table contains rows, while at the command line you are limited to a
+#       single editing rule.
+#
+# Syntax:
+# - Everything after a '#' character up to the end of line is considered to
+#   be a comment (and will be ignored).
+# - All empty lines are ignored as well.
+# - Any space character or tab-stop in a line containing (any) text will be
+#   interpreted as text column separator! The use of spaces in strings is not
+#   supported. Because of this you must use '_' or the letter 'T' to combine
+#   date and time information to one single string for column #5 and #6.
+# - The table must have ten columns and each row defines one additional
+#   editing rule. The first six columns define conditions that must be met
+#   by the miniSEED record before the actions described by the last four
+#   columns are applied to the respective record. In detail, the columns are
+#   as follows:
+#
+#   Column  #1  Regular expression used to match the station id. Analog to
+#               the --match-station command line option.
+#
+#   Column  #2  Regular expression used to match the channel id. Analog to
+#               the --match-channel command line option.
+#
+#   Column  #3  Regular expression used to match the network id. Analog to
+#               the --match-network command line option.
+#
+#   Column  #4  Regular expression used to match the location id. Analog to
+#               the --match-location command line option.
+#
+#   Column  #5  The start time of the currently processed miniSEED record
+#               must be later than this TIMEMOMENT. Analog to the --after-time
+#               command line option.
+#
+#   Column  #6  The start time of the currently processed miniSEED record must
+#               be earlier than this TIMEMOMENT. Analog to the --before-time
+#               command line option.
+#
+#   Column  #7  Set the station id to this value. Analog to the --set-station
+#               command line option.
+#
+#   Column  #8  Set the channel id to this value. Analog to the --set-channel
+#               command line option.
+#
+#   Column  #9  Set the network id to this value. Analog to the --set-network
+#               command line option.
+#
+#   Column #10  Set the location id to this value. Analog to the --set-location
+#               command line option.
+#
+# - If a field in the table contains the wildcard character '*' the respective
+#   condition or action is ignored.
+# - The actions in column #7 to #10 also accept the 'RESET' keyword, which
+#   will clear/remove any content from the corresponding miniSEED header field.
+# ---------------------------------------------------------------------------
+
+# <------------------------------------>   <-------------------------->
+# <-- condition that must be matched -->   <-- action to be applied -->
+# <--                                -->   <--                      -->
+# <--             "old"              -->   <--         "new"        -->
+# <------------------------------------>   <-------------------------->
+
+e3358  p0  *  *       *           *            ABC58  EHZ  *  RESET
+e3372  p0  *  *  2006-09-27  2006-09-28        DEF72  EHZ  *  RESET
+e3382  p0  *  *  2006-10-07  2006-10-08        GHI82  EHZ  *  RESET
+e3358  p1  *  *  2006-10-05  2006-10-06        ABC58  EHN  *  RESET
+e3372  p1  *  *  2006-09-27  2006-09-28        DEF72  EHN  *  RESET
+e3382  p1  *  *  2006-10-07  2006-10-08        GHI82  EHN  *  RESET
+e3358  p2  *  *  2006-10-05  2006-10-06        ABC58  EHE  *  RESET
+e3372  p2  *  *  2006-09-27  2006-09-28        DEF72  EHE  *  RESET
+e3382  p2  *  *  2006-10-07  2006-10-08        GHI82  EHE  *  RESET
+
+# --- fin -------------------------------------------------------------------

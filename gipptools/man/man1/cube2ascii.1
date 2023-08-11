@@ -1,0 +1,746 @@
+'\" t
+.\"     Title: cube2ascii
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2022-12-06
+.\"    Manual: GIPPtools Command Manual
+.\"    Source: Release 2022.340
+.\"  Language: English
+.\"
+.TH "CUBE2ASCII" "1" "2022-12-06" "Release 2022.340" "GIPPtools Command Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+cube2ascii \- convert Cube data to ASCII text format
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+cube2ascii  [\-v|\-\-verbose] [\-\-include\-pattern=\fIPATTERN\fP]...
+            [\-\-trace\-start=\fITIMEMOMENT\fP] [\-\-trace\-stop=\fITIMEMOMENT\fP]
+            [\-\-trace\-length=\fIDURATION\fP] [\-\-trace\-offset=\fISHIFT\fP]
+            [\-\-events=\fIEVENTFILE\fP] [\-\-timing\-control=\fIALGORITHM\fP]
+            [\-\-fringe\-samples=\fIMODE\fP] [\-\-resample=\fIALGORITHM\fP]
+            [\-\-output\-dir=\fIDIRECTORY\fP [\-\-force\-overwrite]]
+            [\-\-format=\fIFORMAT\fP]
+            \fIfile\fP | \fIdirectory\fP...
+.fi
+.br
+.sp
+.sp
+.nf
+cube2ascii  [\-h|\-\-help] [\-\-version] [\-\-sysinfo]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+The \fBcube2ascii\fP utility reads Cube data from one or more \fIfiles\fP and
+converts them to ASCII text format. If an input \fIdirectory\fP is given as
+argument, \fBcube2ascii\fP searches recursively for Cube files inside the
+directory. The search can be shortened to contain only files with a name
+matching patterns given by the \f(CR\-\-include\-pattern\fP option.
+.sp
+After the initial search for available Cube files completed, the program
+will begin to index the data contained in the respective files. This step
+is necessary so that the program later knows of all Cube files belonging
+to the same continuous trace and about the correct chronological order.
+.sp
+As soon as the end of a continuous time series is detected, the utility
+will begin to work through the (internal) lists of time windows that
+were requested by the user via the options \f(CR\-\-events\fP, \f(CR\-\-trace\-start\fP,
+\f(CR\-\-trace\-stop\fP, etc. The required samples are read from the Cube files,
+resampled and converted to the ASCII text format. Finally, the result is
+written directly to standard output (i.e. console) or saved in an output
+directory (use option \f(CR\-\-output\-dir\fP). \fBCube2ascii\fP then turns back again
+to scanning through the Cube input for more continuous recordings,
+processing one trace after another.
+.SH "OPTIONS"
+.sp
+The program pretty much follows expected Unix command line syntax. Some
+command line options have two variants, one long and an additional short one
+(for convenience). These are shown below, separated by commas. However, most
+options only have a long variant. The \(oq\f(CR=\fP\(cq for options that take a
+parameter is required and can not be replaced by a whitespace.
+.sp
+\-h, \-\-help
+.RS 4
+Print a brief summary of all available command line options and exit.
+.RE
+.sp
+\-\-version
+.RS 4
+Print the \fBcube2ascii\fP release information and exit.
+.RE
+.sp
+\-\-sysinfo
+.RS 4
+Provide some basic system information and exit.
+.RE
+.sp
+\-v, \-\-verbose
+.RS 4
+This option increases the amount of information given to the user during
+program execution. By default, (i.e. without this option) \fBcube2ascii\fP only
+reports warnings and errors. (See the diagnostics section below.)
+.RE
+.sp
+\-\-include\-pattern=\fIPATTERN\fP
+.RS 4
+Only process files whose filename matches the given \fIPATTERN\fP. Files with
+a name not matching the search \fIPATTERN\fP will be ignored. This option is
+quite useful to speed up recursive searches through large subdirectory trees
+and can be used more than once in the same command line.
+.sp
+You can use the two wild card characters (\f(CR*\fP and \f(CR?\fP) when specifying a
+\fIPATTERN\fP (e.g. \f(CR*.123\fP). Or alternatively, you can also use a predefined
+filter called \f(CRGIPP\fP that can be used to exclude all files not following the
+usual GIPP naming convention for files recorded by Cubes.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+The search \fIPATTERN\fP is only applied to the filename part and not
+to the full pathname of a file.
+.sp .5v
+.RE
+.RE
+.sp
+The following command line options are all used to specify an input time
+window for reading data from the Cube files. It is considered an error
+to use \f(CR\-\-trace\-start\fP, \f(CR\-\-trace\-stop\fP and \f(CR\-\-trace\-length\fP all at the
+same time. At most two of the three options may be used together. Also,
+the option \f(CR\-\-trace\-length\fP cannot be used alone. It needs a
+\f(CR\-\-trace\-start\fP or \f(CR\-\-trace\-stop\fP as anchor.
+.sp
+\-\-trace\-start=\fITIMEMOMENT\fP
+.RS 4
+Begin converting Cube data at this moment in time. The format for the
+\fITIMEMOMENT\fP string is \fIYYYY\-MM\-DD\fPT\fIHH:MM:SS.ssssss\fP where
+\fIYYYY\-MM\-DD\fP represents the date and \fIHH:MM:SS.ssssss\fP the time
+(fractions of seconds will be rounded to microsecond accuracy). The
+letter \f(CRT\fP in between date and time is used to distinguish between date
+and time part and must be given as well.
+.sp
+Example: To begin reading samples at 1pm on March 27th, 2007 use the
+\fITIMEMOMENT\fP string \f(CR\-\-trace\-start=2007\-03\-27T13:00:00\fP.
+.RE
+.sp
+\-\-trace\-stop=\fITIMEMOMENT\fP
+.RS 4
+Stop processing time series data after this moment in time. The format
+for the \fITIMEMOMENT\fP string is the same as with the \f(CR\-\-trace\-start\fP
+option.
+.RE
+.sp
+\-\-trace\-length=\fIDURATION\fP
+.RS 4
+Stop processing samples after this time span. The \fIDURATION\fP is given in
+seconds and formatted as \fISS.ssssss\fP. Again, fractions of seconds will
+be rounded to microsecond accuracy.
+.sp
+Example: To extract 10 minutes of data use \f(CR\-\-trace\-length=600\fP.
+.sp
+A trace length of 5 minutes will be used as default setting if no trace
+length option is given but a singular \f(CR\-\-trace\-start\fP or \f(CR\-\-trace\-stop\fP
+option is encountered.
+.RE
+.sp
+\-\-trace\-offset=\fISHIFT\fP
+.RS 4
+Use this option to shift the whole time window defined by the command
+line options above. This option exists purely for convenience reasons as
+it would be easy to obtain the same effect by adding \fISHIFT\fP seconds to
+the trace start and stop times manually. In other words, using
+\f(CR\-\-trace\-offset\fP just spares you doing the math when you have a list of
+event times (e.g. from an earthquake catalog) but would like to extract
+a few seconds of data before the event as well.
+.sp
+The format of the trace offset value is \fISS.ssssss\fP, which is given in
+seconds. Negative number shift the window towards earlier times,
+positive number "delay" the window. The total length of the time window
+is not affected by this option.
+.RE
+.sp
+\-\-events=\fIEVENTFILE\fP
+.RS 4
+.sp
+In addition to the four time window options described above, it is also
+possible to use an event file to define many time windows all at once.
+Using an event file makes it possible to convert more than one time
+window per program run. Each line in the event file must begin with the
+start time of a time window that should be converted to ASCII format.
+Optionally, the length and offset of the time window may follow in the
+second and third column.
+.sp
+The event file contains up to three columns separated by spaces or
+tabulators. The three columns are:
+.sp
+Column #1
+.RS 4
+Start time of the time window. Analog to the \f(CR\-\-trace\-start\fP command
+line option. This column is mandatory.
+.RE
+.sp
+Column #2
+.RS 4
+Length of the time window. Analog to the \f(CR\-\-trace\-length\fP command line
+option. If this column is missing a (default) trace length of 2 minutes
+is processed.
+.RE
+.sp
+Column #3
+.RS 4
+An additional shift/offset is applied to the time window. Analog to the
+\f(CR\-\-trace\-offset\fP command line option. This column is also optional.
+.RE
+.sp
+Empty lines in the file are ignored. Everything following a # character
+(up to the end of the line) is considered to be a comment and is skipped
+as well. Columns are counted from the beginning of the line. This means
+you cannot define a trace offset (column #3) without having a trace
+length (column #2) in the line first!
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+The use of an event file is completely independent of the trace
+start, stop, length or offset command line options. Especially,
+the \f(CR\-\-trace\-length\fP option only applies to time windows given via
+\f(CR\-\-trace\-start\fP or \f(CR\-\-trace\-stop\fP but never to time windows defined
+inside an event file!
+.sp .5v
+.RE
+.RE
+.sp
+Ignoring the implementation details of Cube file format, Cube recordings
+basically consist of a continuous stream of sample (amplitude) values, where
+occasional a single sample is additionally timestamped with the precise time
+of its recording (taken from GPS). The following command line options are
+used to control how the time information contained in the Cube files is
+transported into the ASCII text format.
+.sp
+\-\-timing\-control=\fIALGORITHM\fP
+.RS 4
+.sp
+Cube data loggers keep track of the time by tagging selected sample values
+with precise time information. These (time) tagged samples are the foundation
+of the overall timing accuracy of the recording. To ensure a high precision
+it is essential to verify the integrity and premium of the recorded time tags.
+Use this option to select one of the following quality control algorithms:
+.sp
+\fILLS\fP
+.RS 4
+Compute a "local least squares" (LLS) approximation to detect outliers
+and other dubious time information.
+.sp
+The algorithm will determine the timing quality from the squared
+residual error ("misfit") of an individual time tag compared to a fitted
+line through the respective surrounding time tags. Any unexpected large
+misfit is a good indicator for the presence of a "bad" time tag (e.g. an
+outlier). All suspicious time tags are excluded from further processing.
+.sp
+This is the default timing quality control algorithm.
+.RE
+.sp
+\fIRULE\fP
+.RS 4
+Do a rule\-based evaluation of the time tags. The rules are predefined
+and hard\-coded into the program. They were determined by trial and
+error.
+.RE
+.sp
+\fINONE\fP
+.RS 4
+Skip quality control altogether! This will use any available timing
+information without further qualification.
+.RE
+.sp
+\fIFAKE\fP
+.RS 4
+This "quality control" algorithm will completely overwrite any time
+information recorded in a Cube trace with a made\-up fake time. (All
+trace start times are set to 1970\-01\-01 00:00.) Obviously, this will
+completely screw up the timing information! Use it at your own risk.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+Using the \fIFAKE\fP time algorithm will only succeed if the
+\f(CR\-\-fringe\-samples=NOMINAL\fP command line option is used as well.
+.sp .5v
+.RE
+.RE
+.sp
+The main advantage of the \fILLS\fP algorithm is its flexibility. It was
+designed to adapt to different situations and to handle different time
+keeping hardware as well. The \fIRULE\fP based algorithm is faster and much
+simpler. However, the fixed rule set only works effectively for
+anticipated situations and is limited to the current build\-in and
+well\-known GPS hardware. Future Cube generations e.g. will probably
+require an updated set of rules to reliably detect bad time tags due to
+different time keeping hardware. The \fINONE\fP "algorithm" basically disables
+any timing quality control. It should only be used if you can trust all
+time tags unconditionally (or do not care). Finally, the \fIFAKE\fP time
+algorithm is intended for worst case scenarios only, where a user
+absolutely must recover a Cube data stream that cannot be processed
+normally due to total lack of (recorded) timing information. By adding a
+fake time the Cube file(s) becomes "processable" again, although at the
+price of a completely made\-up time information.
+.sp
+In addition to the above listed algorithms, recorded time tags are also
+screened for overall data integrity (range check, checksum) and
+completeness. Also, there a certain hardware limitation common to all
+recorders of the Cube family that occasionally cause individual time
+tags to be discarded. This is done transparently in the background and
+before any of the above algorithms are applied. This cannot be
+influenced by the user!
+.RE
+.sp
+\-\-fringe\-samples=\fIMODE\fP
+.RS 4
+.sp
+Determines how to treat samples that were recorded before the first GPS time
+fix or after the last GPS time fix taken by the Cube unit. Determining the
+precise recording time of these "fringe samples" is problematic because
+without a second time tag on the other side of the sample, the precise
+sampling rate inside the segment cannot be computed. Valid options are:
+.sp
+\fISKIP\fP
+.RS 4
+Simply exclude all samples without good time control from the conversion.
+(Default)
+.RE
+.sp
+\fINOMINAL\fP
+.RS 4
+Include fringe samples assuming a perfect nominal sample rate (e.g. 50 Hz,
+100 Hz, 200 Hz, ...; as configured in the Cube recorder setup).
+.RE
+.sp
+\fICONSTANT\fP
+.RS 4
+Include fringe samples assuming a constant (linear) clock drift over the
+whole recording. The clock drift is calculated from the very first and last
+available GPS fix in the recording.
+.RE
+.sp
+Usually, a Cube recording contains only a few seconds of data before the very
+first GPS time fix occurs. At the end of recording, the time without GPS fix
+depends on the recorder configuration. (GPS running continuous or in cycled
+mode? How long is the cycle?) So, unless you power down and pick up the Cube
+unit immediately after the recording there should be no problem to just skip
+and ignore all fringe samples, which is the default behavior.
+.sp
+The situation is different however, when the Cube is deployed in locations
+without (reliable) GPS reception, e.g. in water or underground in a tunnel.
+Especially, if the Cube runs out of power before it can obtain a last GPS
+fix. Here it might become important to include any recorded sample despite
+the lack of good (GPS) time control. For these cases the \fINOMINAL\fP and
+\fICONSTANT\fP mode are intended.
+.RE
+.sp
+\-\-resample=\fIALGORITHM\fP
+.RS 4
+.sp
+The sampling rate at which a Cube records data is derived from a build\-in,
+high precision crystal oscillator. But despite using high\-quality components,
+a tiny arbitrary offset from its nominal frequency remains. Causes for the
+offset include e.g. component aging and changes in temperature that alter
+the piezoelectric effect in the crystal oscillator. Unfortunately, this
+results in a slightly varying sampling rate during the recording that needs
+to be compensated by resampling the time series. This command line option
+selects the resampling algorithm.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+It is highly recommended that you stick to the default \fISINC\fP
+algorithm unless you have special needs and know what you do!
+.sp .5v
+.RE
+.sp
+\fISINC\fP
+.RS 4
+Resample the Cube data using a windowed \fIsinc\fP interpolation with a
+normalized Blackmann\-Nuttall window. By default, the window width is set
+to 25. (Resulting in a filter kernel of 2x25+1=51 points.)
+.sp
+The width of the Blackmann\-Nuttall window can be adjusted by appending the
+desired width to the SINC keyword (separated by a single comma; no spaces).
+Please see below for an example.
+.RE
+.sp
+\fILINEAR\fP
+.RS 4
+Use a basic linear interpolation between samples.
+.RE
+.sp
+\fINONE\fP
+.RS 4
+Simply copy the Cube input time series to the output without any modification
+to the sample amplitudes at all! The only modification done by this algorithm
+is to (slightly) shift the samples along the time axis. The recording time of
+the very first sample will be used as start time of the time series. All
+following samples will be time shifted such that a "perfect" sample period
+results. Obviously, the absolute timing error increases as the converted
+time series grows in length!
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Important
+.ps -1
+.br
+.sp
+This \fINONE\fP "resampler" simply \fIfudges the recording time\fP of
+the input samples! There is absolutely no resampling done by
+this algorithm (in a mathematical sense). Its usage is highly
+discouraged!
+.sp .5v
+.RE
+.RE
+.RE
+.sp
+The remaining command line arguments control the output of \fBcube2ascii\fP
+utility. An output directory can be selected to which the converted time
+series data is written. Other arguments are provided to select the specific
+formatting variant used for writing.
+.sp
+\-\-output\-dir=\fIDIRECTORY\fP
+.RS 4
+Save the resulting ASCII text files to this \fIDIRECTORY\fP. The directory must
+already exist and be writable! Already existing files in that directory will
+not be overwritten unless the option \f(CR\-\-force\-overwrite\fP is used as well.
+.RE
+.sp
+\-\-force\-overwrite
+.RS 4
+If this option is used, already existing files in the output directory
+will be overwritten without mercy!
+.sp
+The default behavior however is \fBnot\fP to overwrite already existing files.
+Instead, a new file is created with an additional number in between filename
+and extension.
+.RE
+.sp
+\-\-format=\fIFORMAT\fP
+.RS 4
+.sp
+Select one of the following predefined output formats:
+.sp
+\fIALL\fP
+.RS 4
+The combination of the HEADER and DATA format. (This is also the default
+output format.)
+.RE
+.sp
+\fIHEADER\fP
+.RS 4
+Write only the header information. By itself this output format is probably
+pretty useless. (It only exists, because the GIPPtools sibling program
+\fBmseed2ascii\fP also provides a HEADER output format.)
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+If you just want to learn about the content of a Cube file without
+peeking at the actual data, the \fBcubeinfo\fP utility is a much more
+appropriate program.
+.sp .5v
+.RE
+.RE
+.sp
+\fIDATA\fP
+.RS 4
+For each sample (one per line) write the recording time (first column)
+followed by one column for each recording channel. This is probably the
+most useful output format if you plan to import the trace into another
+software package.
+.RE
+.sp
+\fICHANNEL\fP
+.RS 4
+Write sample values, one column per recording channel. The resulting file
+contains no extra column for the recording time of the samples. Instead,
+the start time of the file and the sampling rate must be read from the
+single header line.
+.RE
+.sp
+\fICHANNEL0\fP, \fICHANNEL1\fP, \fICHANNEL2\fP, \fICHANNELn\fP
+.RS 4
+Output sample values of recording channel #0, #1, #2, ..., #\fIn\fP only
+(Cube recording channels are numbered starting with 0.) Otherwise, this
+single column output format is like \fICHANNEL\fP (see above).
+.RE
+.RE
+.SH "ENVIRONMENT"
+.sp
+The following environment variables can optionally be used to influence
+the behavior of the GIPPtool utilities.
+.sp
+GIPPTOOLS_HOME
+.RS 4
+This environment variable is used to find the location of the GIPPtools
+installation directory. In particular, the Java class files that make up the
+GIPPtools are expected to be in the \f(CRjava\fP subdirectory of \fBGIPPTOOLS_HOME\fP.
+.RE
+.sp
+GIPPTOOLS_JAVA
+.RS 4
+The utilities of the GIPPtools are written in the programming language Java
+and consequently need a Java Runtime Environment (JRE) to execute. Use this
+variable to specify the location of the JRE which should be used.
+.RE
+.sp
+GIPPTOOLS_OPTS
+.RS 4
+You can use this environment variable for additional fine\-tuning of the
+Java runtime environment. This is typically used to set the Java heap size
+available to GIPPtool programs.
+.RE
+.sp
+GIPPTOOLS_LEAP
+.RS 4
+The GIPPtools require up\-to\-date leap second information to correctly
+interpret Cube files. Usually, this information is obtained from the
+\f(CRleap\-seconds.list\fP file located in the config subdirectory of the
+GIPPtools installation directory. This environment variable can be used
+to provide a more up\-to\-date leap second list to GIPPtool programs.
+.RE
+.sp
+It is usually not necessary to define any of those variables as suitable
+values should be selected automatically. However, if the automatic detection
+build into the start script fails, or you need to choose between different
+GIPPtool or Java runtime releases installed on your computer, these
+environment variables might become quite helpful to troubleshoot the
+situation.
+.SH "DIAGNOSTICS"
+.sp
+Occasionally, the \fBcube2ascii\fP utility will produce user feedback. In general,
+user messages are classified as \fIINFO\fP, \fIWARNING\fP or \fIERROR\fP. The \fIINFO\fP
+messages are only displayed when the \f(CR\-\-verbose\fP command line option is used.
+They usually report about the progress of the program run, give statistical
+information or write a final summary.
+.sp
+More important are \fIWARNING\fP messages. In general, they warn about (possible)
+issues that may influence the outcome. Although the program will continue
+with execution, you certainly should check the results carefully. You might
+not have gotten what you (thought you) asked for. Finally, \fIERROR\fP messages
+inform about problems that can not be resolved automatically. Program
+execution usually stops and the user must fix the cause of the error first.
+.SH "EXIT CODES"
+.sp
+Use the following program exit codes when calling \fBcube2ascii\fP from scripts
+or other programs to see if \fBcube2ascii\fP finished successfully. Any non\-zero
+code indicates an \fIERROR\fP!
+.sp
+0
+.RS 4
+Success.
+.RE
+.sp
+64
+.RS 4
+Command line syntax or usage error.
+.RE
+.sp
+65
+.RS 4
+Data format error. (The input was not a valid Cube recording.)
+.RE
+.sp
+66
+.RS 4
+An input file did not exist or was not readable.
+.RE
+.sp
+70
+.RS 4
+Error in internal program logic.
+.RE
+.sp
+74
+.RS 4
+I/O error.
+.RE
+.sp
+99
+.RS 4
+Other, unspecified errors.
+.RE
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+To convert all Cube files recorded during an experiment simply use:
+.sp
+.if n .RS 4
+.nf
+cube2ascii \-\-verbose \-\-output\-dir=./ascii\-out/ ./cube\-in/
+.fi
+.if n .RE
+.sp
+The program will recursively search for Cube files inside the cube\-in
+subdirectory. The resulting ASCII files are written to the ascii\-out
+subdirectory.
+.sp
+While searching for Cube files in the cube\-in directory \fBcube2ascii\fP
+will probably complain about files that are not in the expected Cube
+file format. To get rid of the annoying warnings try the following
+command line:
+.sp
+.if n .RS 4
+.nf
+cube2ascii \-\-verbose \-\-include\-pattern=GIPP \-\-output\-dir=./ascii\-out/ ./cube\-in/
+.fi
+.if n .RE
+.sp
+This will exclude all files not following the usual GIPP naming
+convention for Cube files. Also, if you are only interested in the data
+recorded by the Cube with the number \fI544\fP you could modify the command
+line as follows:
+.sp
+.if n .RS 4
+.nf
+cube2ascii \-\-verbose \-\-include\-pattern=\(aq*.544\(aq \-\-output\-dir=./ascii\-out/ ./cube\-in/
+.fi
+.if n .RE
+.sp
+This works because Cube recorder by default use the unit id as file
+extension. You can also repeat include pattern options several times
+to pick more than one set of files:
+.sp
+.if n .RS 4
+.nf
+cube2ascii \-\-verbose \-\-include\-pattern=\(aq*.544\(aq \-\-include\-pattern=\(aq*.545\(aq \-\-output\-dir=./ascii\-out/ ./cube\-in/
+.fi
+.if n .RE
+.sp
+The last command will only process files written by Cube \fI#544\fP and Cube
+\fI#545\fP.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+To convert 30 seconds of Cube data from a single file starting at 1pm on
+February 16th you would use the following command:
+.sp
+.if n .RS 4
+.nf
+cube2ascii \-\-trace\-start=2010\-02\-16T13:00:00 \-\-trace\-length=30 \-\-output\-dir=./ascii\-out/ 02161251.034
+.fi
+.if n .RE
+.sp
+The program will read from Cube file 02161251.034 from the current
+working directory and the converted data will be written to the
+ascii\-out subdirectory.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 3." 4.2
+.\}
+You can customize the window width of the \fIsinc\fP resampling algorithm.
+.sp
+The following line shows the command line argument necessary to change
+the window width from the default of 25 to a width of 30:
+.sp
+.if n .RS 4
+.nf
+cube2ascii \-\-resample=SINC,30 \-\-output\-dir=./ascii\-out/ ./cube\-in/*
+.fi
+.if n .RE
+.RE
+.SH "FILES"
+.sp
+$GIPPTOOLS_HOME/bin/cube2ascii
+.RS 4
+The \fBcube2ascii\fP "program". Usually just a copy of or symbolic link pointing
+to the standard GIPPtools start script.
+.RE
+.sp
+$GIPPTOOLS_HOME/bin/gipptools
+.RS 4
+The GIPPtools start script. Almost all utilities of the GIPPtools package
+are started from this shell script.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgipptools\fP(1), \fBcube2mseed\fP(1), \fBcube2segy\fP(1), \fBcubeevent\fP(1),
+\fBcubeinfo\fP(1), \fBmseed2ascii\fP(1), \fBmseed2mseed\fP(1), \fBmseed2pdas\fP(1),
+\fBmseed2segy\fP(1), \fBmseedcut\fP(1), \fBmseedinfo\fP(1), \fBmseedrecover\fP(1),
+\fBmseedrename\fP(1)
+.SH "BUGS AND CAVEATS"
+.sp
+None so far.

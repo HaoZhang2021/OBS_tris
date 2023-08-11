@@ -1,0 +1,378 @@
+'\" t
+.\"     Title: gipptools
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2022-12-06
+.\"    Manual: GIPPtools Command Manual
+.\"    Source: Release 2022.340
+.\"  Language: English
+.\"
+.TH "GIPPTOOLS" "1" "2022-12-06" "Release 2022.340" "GIPPtools Command Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+gipptools \- a collection of programs for (seismic) data conversion and pre\-processing
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+gipptools  [\-\-run\-tool=\fITOOL\fP  [\fITOOLPARAM\fP]...]
+.fi
+.br
+.sp
+.sp
+.nf
+gipptools  [\-h|\-\-help] [\-\-version] [\-\-sysinfo]
+.fi
+.br
+.SH "INTRODUCTION"
+.sp
+The \fIGeophysical Instrument Pool Potsdam\fP (\fIGIPP\fP) provides seismic and
+magnetotelluric recorders as well as sensors for academic research. It is
+hosted by the \fIHelmholtz\-Zentrum Potsdam Deutsches GeoForschungsZentrum GFZ\fP.
+The GIPPtools main motivation is to provide a collection of software
+utilities that aid with initial pre\-processing of recorded data to support
+users that borrow instruments from the GIPP.
+.sp
+Hopefully, it is also useful for others that work with miniSEED or Cube data
+files.
+.SH "DESCRIPTION"
+.sp
+The programs in the GIPPtools collection are designed and tested to work with
+files produced by Data\-Cube3 recorders (produced by \c
+.URL "http://www.digos.eu" "DiGOS
+Potsdam GmbH" ) and with miniSEED files written by PR6\-24 or EDR\-210 portable
+recorder (produced by \c
+.URL "http://www.earthdata.co.uk" "Earth Data" ")."
+However, there
+is absolutely no reason why the utilities should not work with miniSEED or
+Cube files produced by other instruments or software as well.
+.sp
+The programs will help you to manage your recorded data and to prepare the
+dataset for import into whatever processing software you use for further
+scientific analysis. You can use the utilities, among other things, to
+convert, re\-organize and cut out (seismic) data from miniSEED and Cube data
+files.
+.sp
+The following is a summary of all utilities that are part of the GIPPtools
+collection as well as a one sentence synopsis of their intended use. Detailed
+information about each program can be found in the separate manual pages.
+.sp
+cube2ascii
+.RS 4
+Convert Cube files to various ASCII text format.
+.RE
+.sp
+cube2mseed
+.RS 4
+Convert Cube files to miniSEED format.
+.RE
+.sp
+cube2segy
+.RS 4
+Convert Cube files to SEG\-Y format.
+.RE
+.sp
+cubeevent
+.RS 4
+List events captured by the Cube "event recorder" hardware.
+.RE
+.sp
+cubeinfo
+.RS 4
+Inspect and summarize the content of Cube recordings.
+.RE
+.sp
+mseed2ascii
+.RS 4
+Convert miniSEED data to various ASCII text formats.
+.RE
+.sp
+mseed2mseed
+.RS 4
+Modify header fields of miniSEED records.
+.RE
+.sp
+mseed2pdas
+.RS 4
+Convert miniSEED data to PDAS format.
+.RE
+.sp
+mseed2segy
+.RS 4
+Convert miniSEED files to SEG\-Y format.
+.RE
+.sp
+mseedcut
+.RS 4
+Cut out the miniSEED input into pieces.
+.RE
+.sp
+mseedinfo
+.RS 4
+Inspect and summarize the content of miniSEED files.
+.RE
+.sp
+mseedrecover
+.RS 4
+Recover miniSEED records from damaged files and disks.
+.RE
+.sp
+mseedrename
+.RS 4
+Batch rename miniSEED files using a template.
+.RE
+.SH "USAGE"
+.sp
+All utilities of the GIPPtools collection are written in the Java programming
+language. Usually they are run from the command line by executing a little
+start script named after the respective GIPPtool utility. This script will
+start up the Java Runtime Environment (JRE) that is then used to execute the
+code of the requested tool.
+.sp
+Alternatively, you can also use the "universal" start script called
+\fBgipptools\fP and specify the desired utility via the \f(CR\-\-run\-tool\fP command
+line option. The \fBgipptools\fP start script supports the following options:
+.sp
+\-h, \-\-help
+.RS 4
+Print a brief help text and an up\-to\-date list of all GIPPtool utilities
+available. The help and utility list is also displayed if \fBgipptools\fP is
+called without command line arguments.
+.RE
+.sp
+\-\-version
+.RS 4
+Print the GIPPtools release information and exit.
+.RE
+.sp
+\-\-sysinfo
+.RS 4
+Provide some basic system information and exit.
+.RE
+.sp
+\-\-run\-tool=\fITOOL\fP
+.RS 4
+Select the \fITOOL\fP from the list of GIPPtools utilities that you want to
+execute. All following command line options (displayed as \fITOOLPARAM\fP in
+the synopsis above) will be forwarded to the selected utility. (Please
+see the examples section below.)
+.RE
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+Executing the \fBgipptools\fP start script without any command line argument
+will display a brief help text including an up\-to\-date list of all
+GIPPtool utilities supported by this release.
+.sp
+.if n .RS 4
+.nf
+gipptools
+.fi
+.if n .RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+To obtain basic system information about the currently used GIPPtools
+installation use the \f(CR\-\-sysinfo\fP command line option:
+.sp
+.if n .RS 4
+.nf
+gipptools \-\-sysinfo*
+.fi
+.if n .RE
+.sp
+This will display information about the used GIPPtools release, the Java
+Runtime Environment (JRE), the operating system, the source of the leap
+seconds list as well as the values of selected environment variables.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 3." 4.2
+.\}
+Display the online help of the \fBcubeinfo\fP utility:
+.sp
+.if n .RS 4
+.nf
+gipptools \-\-run\-tool=cubeinfo \-\-help
+.fi
+.if n .RE
+.sp
+This is equivalent to calling the start script for the cubeinfo utility
+directly:
+.sp
+.if n .RS 4
+.nf
+cubeinfo \-\-help
+.fi
+.if n .RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 4." 4.2
+.\}
+Use the \fBcubeinfo\fP utility to show a short summary of the content of the
+\f(CRinput.cube\fP file.
+.sp
+.if n .RS 4
+.nf
+gipptools \-\-run\-tool=cubeinfo \-\-format=summary input.cube
+.fi
+.if n .RE
+.sp
+All command line options after \f(CR\-\-run\-tool=cubeinfo\fP are directly passed
+on to the \fBcubeinfo\fP utility. This makes the above command functionally
+equivalent to calling:
+.sp
+.if n .RS 4
+.nf
+cubeinfo \-\-format=summary input.cube
+.fi
+.if n .RE
+.RE
+.SH "ENVIRONMENT"
+.sp
+The following environment variables can optionally be used to influence
+the behavior of the GIPPtool utilities.
+.sp
+GIPPTOOLS_HOME
+.RS 4
+This environment variable is used to find the location of the GIPPtools
+installation directory. In particular, the Java class files that make up the
+GIPPtools are expected to be in the \f(CRjava\fP subdirectory of \fBGIPPTOOLS_HOME\fP.
+.RE
+.sp
+GIPPTOOLS_JAVA
+.RS 4
+The utilities of the GIPPtools are written in the programming language Java
+and consequently need a Java Runtime Environment (JRE) to execute. Use this
+variable to specify the location of the JRE which should be used.
+.RE
+.sp
+GIPPTOOLS_OPTS
+.RS 4
+You can use this environment variable for additional fine\-tuning of the
+Java runtime environment. This is typically used to set the Java heap size
+available to GIPPtool programs.
+.RE
+.sp
+GIPPTOOLS_LEAP
+.RS 4
+The GIPPtools require up\-to\-date leap second information to correctly
+interpret Cube files. Usually, this information is obtained from the
+\f(CRleap\-seconds.list\fP file located in the config subdirectory of the
+GIPPtools installation directory. This environment variable can be used
+to provide a more up\-to\-date leap second list to GIPPtool programs.
+.RE
+.sp
+It is usually not necessary to define any of those variables as suitable
+values should be selected automatically. However, if the automatic detection
+build into the start script fails, or you need to choose between different
+GIPPtool or Java runtime releases installed on your computer, these
+environment variables might become quite helpful to troubleshoot the
+situation.
+.SH "FILES"
+.sp
+$GIPPTOOLS_HOME/bin
+.RS 4
+Directory containing the start scripts for the various GIPPtool utilities.
+Usually, the scripts are simply a copy of or a link to the central \fBgipptools\fP
+start script in the same directory.
+.RE
+.sp
+$GIPPTOOLS_HOME/java
+.RS 4
+Contains the actual java classes that make up the GIPPtools.
+.RE
+.sp
+$GIPPTOOLS_HOME/config
+.RS 4
+Default settings and other supporting files (e.g. leap\-seconds.list).
+.RE
+.sp
+$GIPPTOOLS_HOME/doc
+.RS 4
+Documentation and example files.
+.RE
+.sp
+$GIPPTOOLS_HOME/man
+.RS 4
+Directory containing the GIPPtools manual page hierarchy.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBcube2ascii\fP(1), \fBcube2mseed\fP(1), \fBcube2segy\fP(1), \fBcubeevent\fP(1),
+\fBcubeinfo\fP(1), \fBmseed2ascii\fP(1), \fBmseed2mseed\fP(1), \fBmseed2pdas\fP(1),
+\fBmseed2segy\fP(1), \fBmseedcut\fP(1), \fBmseedinfo\fP(1), \fBmseedrecover\fP(1),
+\fBmseedrename\fP(1)
+.SH "HOME PAGE"
+.sp
+.URL "http://www.gfz\-potsdam.de/gipp" "" ""
+.SH "CONTACT"
+.sp
+The GIPPtools are written and maintained by \fIChristof Lendl\fP
+(\c
+.MTO "lendl\(atgfz\-potsdam.de" "" ")."
+If you are having trouble installing and/or
+running the software, feel free to e\-mail me. However, please study
+the documentation \fBbefore\fP contacting me. Im not your ghostreader!
+.sp
+When reporting a bug, please be sure to include the GIPPtools release
+number and the computer platform you are using.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+All GIPPtool utilities have a build\-in \f(CR\-\-sysinfo\fP command line
+option that can be used to obtain this as well as other helpful
+information.
+.sp .5v
+.RE

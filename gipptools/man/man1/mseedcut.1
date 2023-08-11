@@ -1,0 +1,474 @@
+'\" t
+.\"     Title: mseedcut
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2022-12-06
+.\"    Manual: GIPPtools Command Manual
+.\"    Source: Release 2022.340
+.\"  Language: English
+.\"
+.TH "MSEEDCUT" "1" "2022-12-06" "Release 2022.340" "GIPPtools Command Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+mseedcut \- cut the miniSEED input into pieces
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+mseedcut  [\-v|\-\-verbose] [\-\-include\-pattern=\fIPATTERN\fP]...
+          [\-\-select\-station=\fISTATION\fP]... [\-\-select\-channel=\fICHANNEL\fP]...
+          [\-\-output\-dir=\fIDIRECTORY\fP [\-\-force\-overwrite]
+          [\-\-force\-concat] [\-\-file\-length=\fIDURATION\fP]]
+          [\-\-trace\-start=\fITIMEMOMENT\fP] [\-\-trace\-stop=\fITIMEMOMENT\fP]
+          [\-\-trace\-length=\fIDURATION\fP] [\-\-trace\-offset=\fISHIFT\fP]
+          [\-\-events=\fIEVENTFILE\fP]
+          [\fIfile\fP | \fIdirectory\fP]...
+.fi
+.br
+.sp
+.sp
+.nf
+mseedcut  [\-h|\-\-help] [\-\-version] [\-\-sysinfo]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+The \fBmseedcut\fP utility is used to cut out defined time windows from the
+miniSEED input as well as to split the input data into files of same length.
+.sp
+The program will either read from standard input or from files given as
+argument at the command line. If one or more directories are given at the
+command line as input, \fBmseedcut\fP searches recursively for files inside
+those directories. The search can be restricted to contain only files with
+a name also matched by a pattern given via one or more \f(CR\-\-include\-pattern\fP
+options.
+.sp
+To extract a specific time window from the miniSEED data stream the command
+line options \f(CR\-\-trace\-start\fP, \f(CR\-\-trace\-length\fP, \f(CR\-\-trace\-stop\fP and
+\f(CR\-\-trace\-offset\fP can be used. The time window is applied to all miniSEED
+input streams read. This makes it possible to cut out the same time window
+from many instruments and/or multiple channels in one program run.
+.sp
+The obtained cutouts are written to standard output (i.e. console) for
+further processing by other tools. If the \f(CR\-\-output\-dir\fP option is used
+the miniSEED output is redirected to one or more files in the respective
+directory. In addition, the miniSEED file output can automatically be
+written into files of equal length. Use the \f(CR\-\-file\-length\fP command line
+options to specify how long each miniSEED file should be.
+.SH "OPTIONS"
+.sp
+The program pretty much follows expected Unix command line syntax. Some
+command line options have two variants, one long and an additional short one
+(for convenience). These are shown below, separated by commas. However, most
+options only have a long variant. The \(oq\f(CR=\fP\(cq for options that take a
+parameter is required and can not be replaced by a whitespace.
+.sp
+\-h, \-\-help
+.RS 4
+Print a brief summary of all available command line options and exit.
+.RE
+.sp
+\-\-version
+.RS 4
+Print the \fBmseedcut\fP release information and exit.
+.RE
+.sp
+\-\-sysinfo
+.RS 4
+Provide some basic system information and exit.
+.RE
+.sp
+\-v, \-\-verbose
+.RS 4
+This option increases the amount of information given to the user during
+program execution. By default, (i.e. without this option) \fBmseedcut\fP only
+reports warnings and errors. (See the diagnostics section below.)
+.RE
+.sp
+\-\-include\-pattern=\fIPATTERN\fP
+.RS 4
+Only process files whose filename matches the given \fIPATTERN\fP. Files with
+a name not matching the search \fIPATTERN\fP will be ignored. This option is
+quite useful to speed up recursive searches through large subdirectory trees
+and can be used more than once in the same command line.
+.sp
+You can use the two wild card characters (\f(CR*\fP and \f(CR?\fP) when specifying a
+\fIPATTERN\fP (e.g. \f(CR*.pri?\fP). Or alternatively, you can also use a predefined
+filter called \f(CRGIPP\fP that can be used to exclude all files not following the
+usual GIPP naming convention for miniSEED files recorded by
+\c
+.URL "http://www.earthdata.co.uk" "Earth Data"
+loggers (e.g. message logging or status files, see examples section below).
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+The search \fIPATTERN\fP is only applied to the filename part and not
+to the full pathname of a file.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-select\-station=\fISTATION\fP
+.RS 4
+Only process miniSEED records with a matching \fISTATION\fP identifier. Records
+that do not match the \fISTATION\fP expression are ignored/skipped.
+.sp
+This command line option understands the two wild card character \f(CR*\fP and \f(CR?\fP
+and can be used more than once in a command line.
+.RE
+.sp
+\-\-select\-channel=\fICHANNEL\fP
+.RS 4
+Only process miniSEED records with a matching \fICHANNEL\fP identifier. Records
+that do not match the \fICHANNEL\fP expression are ignored/skipped.
+.sp
+This command line option understands the two wild card character \f(CR*\fP and \f(CR?\fP
+and can be used more than once in a command line.
+.RE
+.sp
+\-\-output\-dir=\fIDIRECTORY\fP
+.RS 4
+Save the resulting miniSEED files containing the requested time series data
+to this \fIDIRECTORY\fP. The directory must already exist and be writable!
+Already existing files in that directory will not be overwritten unless the
+option \f(CR\-\-force\-overwrite\fP is used as well.
+.RE
+.sp
+\-\-force\-overwrite
+.RS 4
+If this option is used, already existing files in the output directory
+will be overwritten without mercy!
+.sp
+The default behavior however is \fBnot\fP to overwrite already existing files.
+Instead, a new file is created with an additional number in between filename
+and extension.
+.RE
+.sp
+\-\-force\-concat
+.RS 4
+Concatenate the miniSEED output creating as few new files as possible. This
+means that a new output file is only started when there is a (data)
+discontinuity in the miniSEED input. Without discontinuity the converted
+data is simply appended to the currently used output file.
+.sp
+By default, however, a separate new output file is created for every single
+miniSEED input file.
+.RE
+.sp
+\-\-file\-length=\fIDURATION\fP
+.RS 4
+Split the miniSEED output data into several files with a length of at
+most the given \fIDURATION\fP. Common values are \f(CRMINUTE\fP, \f(CRHOUR\fP, \f(CRDAY\fP or
+\f(CRWEEK\fP, which are also understood as input value (see examples section
+below). The \fBmseedcut\fP utility will start new output files at the full
+minute, hour, day or week respectively.
+.sp
+Alternatively, the \fIDURATION\fP can also be given directly as plain number
+(in seconds).
+.RE
+.sp
+The following four command line options are all used to specify a time
+window for extracting data from the miniSEED input. It is considered an
+error to use \f(CR\-\-trace\-start\fP, \f(CR\-\-trace\-stop\fP and \f(CR\-\-trace\-length\fP together
+at the same time. At most two of the three options may be used for the same
+command line. Also, the option \f(CR\-\-trace\-length\fP cannot be used alone. It
+needs \f(CR\-\-trace\-start\fP or \f(CR\-\-trace\-stop\fP as anchor.
+.sp
+\-\-trace\-start=\fITIMEMOMENT\fP
+.RS 4
+Begin extracting time series data at this moment in time. The format for
+the \fITIMEMOMENT\fP string is \fIYYYY\-MM\-DD\fPT\fIHH:MM:SS.ssssss\fP where
+\fIYYYY\-MM\-DD\fP represents the date and \fIHH:MM:SS.ssssss\fP the time
+(fractions of seconds will be rounded to microsecond accuracy). The
+letter T in between date and time is used to distinguish between date
+and time part and must be given as well. Example: To begin reading
+samples at 1pm on March 27th, 2007 use the \fITIMEMOMENT\fP string
+\f(CR\-\-trace\-start=2007\-03\-27T13:00:00\fP.
+.RE
+.sp
+\-\-trace\-stop=\fITIMEMOMENT\fP
+.RS 4
+Stop extracting time series data at this moment in time. The format for
+the \fITIMEMOMENT\fP string is the same as with the \f(CR\-\-trace\-start\fP option.
+.RE
+.sp
+\-\-trace\-length=\fIDURATION\fP
+.RS 4
+Stop extracting samples after this time span. The \fIDURATION\fP format is
+\fISS.ssssss\fP and is given in seconds. Again, fractions of seconds are
+rounded to microsecond accuracy. Example: To extract 10 minutes of data
+use \f(CR\-\-trace\-length=600\fP.
+.sp
+A trace length of 5 minutes is used as default setting if no trace length
+option is given and a singular \f(CR\-\-trace\-start\fP or \f(CR\-\-trace\-stop\fP option
+is found.
+.RE
+.sp
+\-\-trace\-offset=\fISHIFT\fP
+.RS 4
+Use this option to shift the time window defined by the three command
+line options above. This option exists purely for convenience reasons as it
+would be easy to obtain the same effect by adding \fISHIFT\fP seconds to the
+trace start and stop time manually. In other words, using \f(CR\-\-trace\-offset\fP
+just spares you from doing the math yourself in case you have a list of
+event times but would like to extract a few seconds of data before the
+event as well.
+.sp
+The format of the trace offset value is \fISS.ssssss,\fP and it is given in
+seconds. Negative number shift the window towards earlier times, positive
+number "delay" the window. The total length of the time window is not
+affected by this option.
+.RE
+.sp
+\-\-events=\fIEVENTFILE\fP
+.RS 4
+.sp
+In addition to the options described above it is also possible to use an
+event file to define time windows. Using an event file makes it possible
+to cut out more than one time window per program run. Each line in the
+event file must begin with the start time of the time window that should
+be read. Optionally, the length and offset of the time window may follow
+in the second and third column.
+.sp
+Event files contain up to three columns separated by spaces or tabulators.
+The three columns are:
+.sp
+Column #1
+.RS 4
+Start time of the time window. Analog to the \f(CR\-\-trace\-start\fP command
+line option. This column is mandatory.
+.RE
+.sp
+Column #2
+.RS 4
+Length of the time window. Analog to the \f(CR\-\-trace\-length\fP command line
+option.
+.RE
+.sp
+Column #3
+.RS 4
+An additional shift/offset applied to the time window. Analog to the
+\f(CR\-\-trace\-offset\fP command line option.
+.RE
+.sp
+Empty lines in the file are ignored. Everything following a \(oq#\(cq character
+(up to the end of the line) is considered to be a comment and is skipped as
+well. Columns are counted from the beginning of the line. This means you
+cannot define a trace offset (column #3) without having a trace length
+(column #2) in the line first!
+.RE
+.SH "ENVIRONMENT"
+.sp
+The following environment variables can optionally be used to influence
+the behavior of the GIPPtool utilities.
+.sp
+GIPPTOOLS_HOME
+.RS 4
+This environment variable is used to find the location of the GIPPtools
+installation directory. In particular, the Java class files that make up the
+GIPPtools are expected to be in the \f(CRjava\fP subdirectory of \fBGIPPTOOLS_HOME\fP.
+.RE
+.sp
+GIPPTOOLS_JAVA
+.RS 4
+The utilities of the GIPPtools are written in the programming language Java
+and consequently need a Java Runtime Environment (JRE) to execute. Use this
+variable to specify the location of the JRE which should be used.
+.RE
+.sp
+GIPPTOOLS_OPTS
+.RS 4
+You can use this environment variable for additional fine\-tuning of the
+Java runtime environment. This is typically used to set the Java heap size
+available to GIPPtool programs.
+.RE
+.sp
+It is usually not necessary to define any of those variables as suitable
+values should be selected automatically. However, if the automatic detection
+build into the start script fails, or you need to choose between different
+GIPPtool or Java runtime releases installed on your computer, these
+environment variables might become quite helpful to troubleshoot the
+situation.
+.SH "DIAGNOSTICS"
+.sp
+Occasionally, the \fBmseedcut\fP utility will produce user feedback. In general,
+user messages are classified as \fIINFO\fP, \fIWARNING\fP or \fIERROR\fP. The \fIINFO\fP
+messages are only displayed when the \f(CR\-\-verbose\fP command line option is used.
+They usually report about the progress of the program run, give statistical
+information or write a final summary.
+.sp
+More important are \fIWARNING\fP messages. In general, they warn about (possible)
+issues that may influence the outcome. Although the program will continue
+with execution, you certainly should check the results carefully. You might
+not have gotten what you (thought you) asked for. Finally, \fIERROR\fP messages
+inform about problems that can not be resolved automatically. Program
+execution usually stops and the user must fix the cause of the error first.
+.SH "EXIT CODES"
+.sp
+Use the following program exit codes when calling \fBmseedcut\fP from scripts
+or other programs to see if \fBmseedcut\fP finished successfully. Any non\-zero
+code indicates an \fIERROR\fP!
+.sp
+0
+.RS 4
+Success.
+.RE
+.sp
+64
+.RS 4
+Command line syntax or usage error.
+.RE
+.sp
+65
+.RS 4
+Data format error. (The input was not a valid miniSEED file.)
+.RE
+.sp
+66
+.RS 4
+An input file did not exist or was not readable.
+.RE
+.sp
+74
+.RS 4
+I/O error.
+.RE
+.sp
+99
+.RS 4
+Other, unspecified errors.
+.RE
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+To extract a thirty\-second long time series from an EDL miniSEED file
+beginning at 10:35pm on December 26th, 2007 use:
+.sp
+.if n .RS 4
+.nf
+mseedcut \-\-trace\-start=2007\-12\-26T22:35:00 \-\-trace\-length=30  e3395071226233000.pri0 > ./result.mseed
+.fi
+.if n .RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+To extract the same thirty\-second long time window of the vertical
+component recorded by many stations run the following command line:
+.sp
+.if n .RS 4
+.nf
+mseedcut \-\-trace\-start=2007\-12\-26T22:35:00 \-\-trace\-length=30 \-\-include\-pattern=*.pri0 \-\-output\-dir=./event \-\-force\-concat  ./input
+.fi
+.if n .RE
+.sp
+This will search recursively through the subdirectory \f(CR./input\fP for
+miniSEED input files ending with the filename extension \f(CR.pri0\fP (the first
+primary recording channel). It will then return the requested time
+window, creating new, 30 seconds long miniSEED files in the \f(CR./event\fP
+subdirectory.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 3." 4.2
+.\}
+To simplify file handling it is often useful to create "day files", each
+containing the miniSEED data of one recorder channel and one day in a
+single file:
+.sp
+.if n .RS 4
+.nf
+mseedcut \-\-file\-length=86400 \-\-output\-dir=./daily  ./input
+.fi
+.if n .RE
+.sp
+Alternatively, you can also use one of the predefined keywords (\fIMINUTE\fP,
+\fIHOUR\fP, \fIDAY\fP or \fIWEEK\fP) instead:
+.sp
+.if n .RS 4
+.nf
+mseedcut \-\-file\-length=DAY \-\-output\-dir=./daily ./input
+.fi
+.if n .RE
+.RE
+.SH "FILES"
+.sp
+$GIPPTOOLS_HOME/bin/mseedcut
+.RS 4
+The \fBmseedcut\fP "program". Usually just a copy of or symbolic link pointing
+to the standard GIPPtools start script.
+.RE
+.sp
+$GIPPTOOLS_HOME/bin/gipptools
+.RS 4
+The GIPPtools start script. Almost all utilities of the GIPPtools package
+are started from this shell script.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgipptools\fP(1), \fBcube2ascii\fP(1), \fBcube2mseed\fP(1), \fBcube2segy\fP(1),
+\fBcubeevent\fP(1), \fBcubeinfo\fP(1), \fBmseed2ascii\fP(1), \fBmseed2mseed\fP(1),
+\fBmseed2pdas\fP(1), \fBmseed2segy\fP(1), \fBmseedinfo\fP(1), \fBmseedrecover\fP(1),
+\fBmseedrename\fP(1)
+.SH "BUGS AND CAVEATS"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+Extract data from \fIASCII encoded\fP miniSEED records is not supported.
+There is no standard how the text contained in those records should be
+structured, which makes it difficult to read sample values. Also, \fIASCII
+encoded\fP records often contain logging information, recorder configurations
+or other metadata instead of data samples.
+.br
+This makes it impossible to handle such files without custom software.
+.RE

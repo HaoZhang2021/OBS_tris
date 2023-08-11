@@ -1,0 +1,425 @@
+'\" t
+.\"     Title: mseedrecover
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2022-12-06
+.\"    Manual: GIPPtools Command Manual
+.\"    Source: Release 2022.340
+.\"  Language: English
+.\"
+.TH "MSEEDRECOVER" "1" "2022-12-06" "Release 2022.340" "GIPPtools Command Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+mseedrecover \- recover miniSEED data from corrupted or damaged files
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+mseedrecover  [\-\-dry\-run] [\-v|\-\-verbose]
+              [\-\-start\-offset=\fIOFFSET\fP] [\-\-stop\-offset=\fIOFFSET\fP]
+              [\-\-search\-interval=\fISIZE\fP] [\-\-no\-dedupe]
+              [\-\-output\-dir=\fIDIRECTORY\fP [\-\-force\-overwrite]
+              [\-\-force\-concat] [\-\-force\-sort]]
+              [\fIfile\fP | \fIdirectory\fP]...
+.fi
+.br
+.sp
+.sp
+.nf
+mseedrecover  [\-h|\-\-help] [\-\-version] [\-\-sysinfo]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+\fBMseedrecover\fP reads from a \fIfile\fP and tries to find valid miniSEED records
+in the input. If a \fIdirectory\fP is given at the command line, \fBmseedrecover\fP
+searches recursively for input files inside the directory. If no file or
+directory argument was given, the standard input is scanned for miniSEED
+data instead.
+.sp
+While reading, the input is searched for certain byte patterns that are
+typical for all miniSEED records. If a potential record is located,
+\fBmseedrecover\fP will attempt to read it completely. If successful, the
+integrity of the data is checked next. Intact miniSEED records are written
+to standard output (i.e. console) or saved in an output directory (use
+option \f(CR\-\-output\-dir\fP). All damaged or incomplete fragments are discarded.
+Non\-miniSEED data will be ignored and skipped!
+.sp
+Unlike most other GIPPtool utilities, \fBmseedrecover\fP is quite unassuming
+about its input. If necessary, \fBmseedrecover\fP will read data from a device
+file directly (see the example section below) or scan an (uncompressed) disk
+image file.
+.SH "OPTIONS"
+.sp
+The program pretty much follows expected Unix command line syntax. Some
+command line options have two variants, one long and an additional short one
+(for convenience). These are shown below, separated by commas. However, most
+options only have a long variant. The \(oq\f(CR=\fP\(cq for options that take a
+parameter is required and can not be replaced by a whitespace.
+.sp
+\-h, \-\-help
+.RS 4
+Print a brief summary of all available command line options and exit.
+.RE
+.sp
+\-\-version
+.RS 4
+Print the \fBmseedrecover\fP release information and exit.
+.RE
+.sp
+\-\-sysinfo
+.RS 4
+Provide some basic system information and exit.
+.RE
+.sp
+\-\-dry\-run
+.RS 4
+Perform a trial run with no changes and modifications made whatsoever to
+the file system while at the same time producing (almost) the same user
+feedback as a real run. This option is most commonly used in combination
+with the \f(CR\-\-verbose\fP options to see what the \fBmseedrecover\fP command is about
+to do before one actually runs it for real.
+.RE
+.sp
+\-v, \-\-verbose
+.RS 4
+This option increases the amount of information given to the user during
+program execution. By default, (i.e. without this option) \fBmseedrecover\fP only
+reports warnings and errors. (See the diagnostics section below.)
+.RE
+.sp
+\-\-start\-offset=\fIOFFSET\fP
+.RS 4
+Before any data is analyzed, the first \fIOFFSET\fP bytes are skipped and
+ignored from the input. Use this option to "fast\-forward" the input to a
+position where you suspect recoverable miniSEED data.
+.RE
+.sp
+\-\-stop\-offset=\fIOFFSET\fP
+.RS 4
+The search for miniSEED data fragments will be aborted after the stop
+offset limit was passed. The \fIOFFSET\fP is as absolute position from the
+beginning of the input and given in bytes (and not relative to the
+\f(CR\-\-start\-offset\fP parameter).
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+This offset is not used as an absolute, hard stop criteria! If the
+limit is reached while \fBmseedrecover\fP currently extracts valid
+miniSEED data from the input, the program will rather finish
+extracting the current (intact) data fragment than to stop abruptly
+in the middle of some miniSEED record.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-search\-interval=\fISIZE\fP
+.RS 4
+Search interval in bytes. When searching for miniSEED data in the input,
+the program will look every \fISIZE\fP bytes if a valid miniSEED record starts
+at that offset. Although in principle, any positive number is possible as
+interval, it probably does not make sense to use anything other than a power
+of two (i.e. 1, 2, 4, 8, 16, etc.).
+.sp
+The default value of 512 bytes seems to be the best compromise between
+speed and thoroughness of the search for most situation. However, to make
+absolutely sure you do not miss anything chose an interval of 1.
+.RE
+.sp
+\-no\-dedupe
+.RS 4
+Disable the detection of duplicate miniSEED records. The default behavior,
+however, is to automatically detect duplicates and to only save one single
+copy per record.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+Multiple instance of the same miniSEED record are often encountered when
+rescuing data directly from a disk drive while bypassing the filesystem
+level (using "block level access"). This is because EDR/EDL recorder
+create a new copy of an existing miniSEED file before appending more
+records to it. After the data is appended the original file is deleted.
+Although no longer accessible from the filesystem level the data of the
+original, old file is still on the disk where it may become overwritten
+eventually. These already deleted files are the origin of the multiple
+copies.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-output\-dir=\fIDIRECTORY\fP
+.RS 4
+Save all recovered records to this \fIDIRECTORY\fP. The directory must already
+exist and be writable! Already existing miniSEED files in that directory
+will not be overwritten unless the option \f(CR\-\-force\-overwrite\fP is used as well.
+.RE
+.sp
+\-\-force\-overwrite
+.RS 4
+If this option is used, already existing files in the output directory
+will be overwritten without mercy!
+.sp
+The default behavior however is \fBnot\fP to overwrite already existing files.
+Instead, a new file is created with an additional number in between filename
+and extension.
+.RE
+.sp
+\-\-force\-concat
+.RS 4
+Concatenate the miniSEED output creating as few new files as possible. This
+means that a new output file is only started when there is a (data)
+discontinuity in the miniSEED input. Without discontinuity the converted
+data is simply appended to the currently used output file.
+.sp
+By default, however, a separate new output file is created for every single
+miniSEED input file.
+.RE
+.sp
+\-\-force\-sort
+.RS 4
+Sort the recovered miniSEED fragments. If this option is set, an additional
+subdirectory level (consisting of \fIyear\fP and \fIday\-of\-year\fP) will be created
+inside the output directory and the recovered miniSEED records are placed in
+the respective subdirectories.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+The \fBmseedrename\fP command provides a more elaborated method to
+(re\-)organize miniSEED files.
+.sp .5v
+.RE
+.RE
+.SH "ENVIRONMENT"
+.sp
+The following environment variables can optionally be used to influence
+the behavior of the GIPPtool utilities.
+.sp
+GIPPTOOLS_HOME
+.RS 4
+This environment variable is used to find the location of the GIPPtools
+installation directory. In particular, the Java class files that make up the
+GIPPtools are expected to be in the \f(CRjava\fP subdirectory of \fBGIPPTOOLS_HOME\fP.
+.RE
+.sp
+GIPPTOOLS_JAVA
+.RS 4
+The utilities of the GIPPtools are written in the programming language Java
+and consequently need a Java Runtime Environment (JRE) to execute. Use this
+variable to specify the location of the JRE which should be used.
+.RE
+.sp
+GIPPTOOLS_OPTS
+.RS 4
+You can use this environment variable for additional fine\-tuning of the
+Java runtime environment. This is typically used to set the Java heap size
+available to GIPPtool programs.
+.RE
+.sp
+It is usually not necessary to define any of those variables as suitable
+values should be selected automatically. However, if the automatic detection
+build into the start script fails, or you need to choose between different
+GIPPtool or Java runtime releases installed on your computer, these
+environment variables might become quite helpful to troubleshoot the
+situation.
+.SH "DIAGNOSTICS"
+.sp
+Occasionally, the \fBmseedrecover\fP utility will produce user feedback. In general,
+user messages are classified as \fIINFO\fP, \fIWARNING\fP or \fIERROR\fP. The \fIINFO\fP
+messages are only displayed when the \f(CR\-\-verbose\fP command line option is used.
+They usually report about the progress of the program run, give statistical
+information or write a final summary.
+.sp
+More important are \fIWARNING\fP messages. In general, they warn about (possible)
+issues that may influence the outcome. Although the program will continue
+with execution, you certainly should check the results carefully. You might
+not have gotten what you (thought you) asked for. Finally, \fIERROR\fP messages
+inform about problems that can not be resolved automatically. Program
+execution usually stops and the user must fix the cause of the error first.
+.sp
+A good method to see what will happen is to use the \f(CR\-\-dry\-run\fP and the
+\f(CR\-\-verbose\fP command line option at the same time. If user feedback indicates
+that \fBmseedrecover\fP works as expected it can be started again, this time without
+the \f(CR\-\-dry\-run\fP option.
+.SH "EXIT CODES"
+.sp
+Use the following program exit codes when calling \fBmseedrecover\fP from scripts
+or other programs to see if \fBmseedrecover\fP finished successfully. Any non\-zero
+code indicates an \fIERROR\fP!
+.sp
+0
+.RS 4
+Success.
+.RE
+.sp
+64
+.RS 4
+Command line syntax or usage error.
+.RE
+.sp
+66
+.RS 4
+An input file did not exist or was not readable.
+.RE
+.sp
+74
+.RS 4
+I/O error.
+.RE
+.sp
+99
+.RS 4
+Other, unspecified errors.
+.RE
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+You have a file that you know must contain miniSEED data. However, none
+of the other GIPPtool utilities will accept it as input. All you get are
+error messages, complaining about an "IntegrityException" or other
+strange things. In other words, you have a damaged file! To see what can
+be salvaged from the damaged.mseed file you might try the following:
+.sp
+.if n .RS 4
+.nf
+mseedrecover \-\-dry\-run \-\-verbose \-\-search\-interval=1 damaged.mseed
+.fi
+.if n .RE
+.sp
+From the user feedback generated during the trial run you gather that there
+is hope to recover at least some original content of the file, so you next
+run the command
+.sp
+.if n .RS 4
+.nf
+mseedrecover \-\-verbose \-\-search\-interval=1 damaged.mseed > recovered.mseed
+.fi
+.if n .RE
+.sp
+This will write the recovered data in the respective output file. Comparing
+the file size of the two files then gives you an idea, how much data was lost.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+There is a problem with an EDL hard disk. Maybe you cannot copy the
+miniSEED files from the "data" partition because of a corrupted file
+systems. Or possibly an overeager assistant accidentally formatted the
+"data" partition before the recorded miniSEED files were saved. Whatever
+the reason, to directly recover miniSEED data from an EDL disk (without
+going through the file system) you might run the following command:
+.sp
+.if n .RS 4
+.nf
+mseedrecover \-\-output\-dir=./rescue911 \-\-force\-sort /dev/sdx3
+.fi
+.if n .RE
+.sp
+This assumes that you can access the "data" partition of the faulty disk via
+the device file /dev/sdx3 (EDL disks always use the third partition to store
+miniSEED data). By reading from the device file directly, you bypass the
+faulty file system and read the "data" partition block by block. The
+recovered miniSEED fragments are written to "\fIyear\fP"\-"\fIday\-of\-year\fP"
+subdirectories in the rescue911 directory.
+.RE
+.SH "FILES"
+.sp
+$GIPPTOOLS_HOME/bin/mseedrecover
+.RS 4
+The \fBmseedrecover\fP "program". Usually just a copy of or symbolic link pointing
+to the standard GIPPtools start script.
+.RE
+.sp
+$GIPPTOOLS_HOME/bin/gipptools
+.RS 4
+The GIPPtools start script. Almost all utilities of the GIPPtools package
+are started from this shell script.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgipptools\fP(1), \fBcube2ascii\fP(1), \fBcube2mseed\fP(1), \fBcube2segy\fP(1),
+\fBcubeevent\fP(1), \fBcubeinfo\fP(1), \fBmseed2ascii\fP(1), \fBmseed2mseed\fP(1),
+\fBmseed2pdas\fP(1), \fBmseed2segy\fP(1), \fBmseedcut\fP(1), \fBmseedinfo\fP(1),
+\fBmseedrename\fP(1)
+.SH "BUGS AND CAVEATS"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+The \fBmseedrecover\fP program only recovers data in miniSEED format! It
+cannot recover data in other formats, such as textual log or configuration
+files. Unless you can recover those files by other means (maybe some
+"un\-delete" or "un\-format" tool can help) they are lost!
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+When using a device file as input (see example section) you might recover
+field\-data from other experiments. Possibly from experiments many years
+ago. You should be aware of this if confidentiality is of concern to you.
+.RE

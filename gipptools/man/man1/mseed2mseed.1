@@ -1,0 +1,1031 @@
+'\" t
+.\"     Title: mseed2mseed
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2022-12-06
+.\"    Manual: GIPPtools Command Manual
+.\"    Source: Release 2022.340
+.\"  Language: English
+.\"
+.TH "MSEED2MSEED" "1" "2022-12-06" "Release 2022.340" "GIPPtools Command Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+mseed2mseed \- modify miniSEED header fields
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+mseed2mseed  [\-\-dry\-run] [\-v|\-\-verbose]
+             [\-\-include\-pattern=\fIPATTERN\fP]... [\-\-rules=\fIRULEFILE\fP]
+             [\-\-output\-dir=\fIDIRECTORY\fP [\-\-force\-overwrite] [\-\-force\-concat]]
+             [\-\-byte\-order=\fIORDER\fP] [\-\-record\-size=\fIN\fP] [\-\-encoding=\fICODEC\fP]
+             [\-\-match\-station=\fIREGEX\fP] [\-\-match\-channel=\fIREGEX\fP]
+             [\-\-match\-network=\fIREGEX\fP] [\-\-match\-location=\fIREGEX\fP]
+             [\-\-equals\-sample\-rate=\fIRATE\fP] [\-\-equals\-sample\-period=\fIPERIOD\fP]
+             [\-\-equals\-timing\-quality=\fIQUALITY\fP]
+             [\-\-less\-than\-timing\-quality=\fIQUALITY\fP]
+             [\-\-more\-than\-timing\-quality=\fIQUALITY\fP]
+             [\-\-after\-time=\fITIMEMOMENT\fP] [\-\-before\-time=\fITIMEMOMENT\fP]
+             [\-\-set\-station=\fISTATION\fP] [\-\-set\-channel=\fICHANNEL\fP]
+             [\-\-set\-network=\fINETWORK\fP] [\-\-set\-location=\fILOCATION\fP]
+             [\-\-set\-timing\-quality=\fIQUALITY\fP] [\-\-shift\-time=\fISECONDS\fP]
+             [\-\-bugfix\-edr\-start\-time] [\-\-bugfix\-gps\-epoch]
+             [\fIfile\fP | \fIdirectory\fP]...
+.fi
+.br
+.sp
+.sp
+.nf
+mseed2mseed  [\-h|\-\-help] [\-\-version] [\-\-sysinfo]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+\fBMseed2mseed\fP is used to modify selected header fields in miniSEED
+files. The actual time series data contained in the miniSEED file is
+never changed! The input data is either read from standard input or from
+files given as argument at the command line. If one or more directories
+are given at the command line as input, \fBmseed2mseed\fP searches
+recursively for files inside those directories applying the editing rule
+to each file found. The search can be restricted to contain only files
+with a name also matched by a pattern given via one or more
+\fB\-\-include\-pattern\fP options.
+.sp
+While processing the miniSEED input, \fBmseed2mseed\fP modifies the header
+fields according to an \fIediting rule\fP. The editing rule consists of one
+or more \fIconditions\fP that must be met before (one or more) \fIactions\fP are
+applied to the miniSEED record. Actions usually describe which header
+field is changed and what the new value will be. Conditions restrict the
+range of miniSEED records to which the actions are applied. If no
+conditions are defined, all miniSEED records will be modified. If no
+actions are defined the miniSEED input will pass through \fBmseed2mseed\fP
+unmodified (the default behavior). See below for a description of all
+possible editing actions and conditions.
+.sp
+In addition to applying editing rules that support selective changes to
+the header fields, there are also three "global" options
+(\f(CR\-\-byte\-order\fP, \f(CR\-\-record\-size\fP and \f(CR\-\-encoding\fP) that can be used to
+change the data "format" of the miniSEED input. Again, the actual time
+series data contained in the miniSEED file is not changed. Only the
+method how it is stored inside the records is modified. Unlike the
+editing rules described above, these options always apply to all input!
+.sp
+After processing, all miniSEED input that was read by the \fBmseed2mseed\fP
+program (the modified parts as well as unmodified ones) is written to
+the standard output. If the \f(CR\-\-output\-dir\fP option is used the miniSEED
+output is redirected to the respective directory.
+.SH "OPTIONS"
+.sp
+The program pretty much follows expected Unix command line syntax. Some
+command line options have two variants, one long and an additional short one
+(for convenience). These are shown below, separated by commas. However, most
+options only have a long variant. The \(oq\f(CR=\fP\(cq for options that take a
+parameter is required and can not be replaced by a whitespace.
+.sp
+\-h, \-\-help
+.RS 4
+Print a brief summary of all available command line options and exit.
+.RE
+.sp
+\-\-version
+.RS 4
+Print the \fBmseed2mseed\fP release information and exit.
+.RE
+.sp
+\-\-sysinfo
+.RS 4
+Provide some basic system information and exit.
+.RE
+.sp
+\-\-dry\-run
+.RS 4
+Perform a trial run with no changes and modifications made whatsoever to
+the file system while at the same time producing (almost) the same user
+feedback as a real run. This option is most commonly used in combination
+with the \f(CR\-\-verbose\fP options to see what the \fBmseed2mseed\fP command is about
+to do before one actually runs it for real.
+.RE
+.sp
+\-v, \-\-verbose
+.RS 4
+This option increases the amount of information given to the user during
+program execution. By default, (i.e. without this option) \fBmseed2mseed\fP only
+reports warnings and errors. (See the diagnostics section below.)
+.RE
+.sp
+\-\-include\-pattern=\fIPATTERN\fP
+.RS 4
+Only process files whose filename matches the given \fIPATTERN\fP. Files with
+a name not matching the search \fIPATTERN\fP will be ignored. This option is
+quite useful to speed up recursive searches through large subdirectory trees
+and can be used more than once in the same command line.
+.sp
+You can use the two wild card characters (\f(CR*\fP and \f(CR?\fP) when specifying a
+\fIPATTERN\fP (e.g. \f(CR*.pri?\fP). Or alternatively, you can also use a predefined
+filter called \f(CRGIPP\fP that can be used to exclude all files not following the
+usual GIPP naming convention for miniSEED files recorded by
+\c
+.URL "http://www.earthdata.co.uk" "Earth Data"
+loggers (e.g. message logging or status files, see examples section below).
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+The search \fIPATTERN\fP is only applied to the filename part and not
+to the full pathname of a file.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-output\-dir=\fIDIRECTORY\fP
+.RS 4
+Save processed miniSEED data to this \fIDIRECTORY\fP. The directory must
+already exist and be writable! Already existing miniSEED files in that
+directory will not be overwritten unless the option \f(CR\-\-force\-overwrite\fP
+is used as well.
+.RE
+.sp
+\-\-force\-overwrite
+.RS 4
+If this option is used, already existing files in the output directory
+will be overwritten without mercy!
+.sp
+The default behavior however is \fBnot\fP to overwrite already existing files.
+Instead, a new file is created with an additional number in between filename
+and extension.
+.RE
+.sp
+\-\-force\-concat
+.RS 4
+Concatenate the miniSEED output creating as few new files as possible. This
+means that a new output file is only started when there is a (data)
+discontinuity in the miniSEED input. Without discontinuity the converted
+data is simply appended to the currently used output file.
+.sp
+By default, however, a separate new output file is created for every single
+miniSEED input file.
+.RE
+.sp
+\-\-byte\-order=\fIORDER\fP
+.RS 4
+Set the byte order the miniSEED output. Valid values are \fIBIG\-ENDIAN\fP or
+\fILITTLE\-ENDIAN\fP, each selecting the respective byte order. Using the value
+\fINATIVE\fP as argument automatically changes the byte order to the native
+byte order of the currently used computer platform (e.g. little endian
+on Intel PCs and big endian on Sun SPARC machines).
+.RE
+.sp
+\-\-record\-size=\fIN\fP
+.RS 4
+Set the record size of the miniSEED output. The record size is given in
+bytes and is expected to be a power of two value (e.g. 512, 1024, 2048, ...).
+.RE
+.sp
+\-\-encoding=\fICODEC\fP
+.RS 4
+.sp
+Set the encoding scheme for the time series data. At the moment the
+following encoding schemes are supported:
+.sp
+\fIINT\-32\fP
+.RS 4
+Uncompressed 32\-bit integers.
+.RE
+.sp
+\fIFLOAT\-32\fP
+.RS 4
+Uncompressed IEEE single precision (32\-bit) floating point numbers.
+.RE
+.sp
+\fIFLOAT\-64\fP
+.RS 4
+Uncompressed IEEE double precision (64\-bit) floating point numbers.
+.RE
+.sp
+\fISTEIM\-1\fP
+.RS 4
+Steim\-1 compressed integers.
+.RE
+.sp
+\fISTEIM\-2\fP
+.RS 4
+Steim\-2 compressed integers.
+.RE
+.RE
+.sp
+\-\-rules=\fIRULEFILE\fP
+.RS 4
+.sp
+Define simple header editing rules based on the ASCII table contained in
+\fIRULEFILE\fP. The table must have ten columns and each row will result in
+one additional editing rule. The first six columns define conditions
+that must be met by the miniSEED record before the actions described by
+the last four columns are applied to the respective record. In detail,
+the columns are used as follows:
+.sp
+Column #1
+.RS 4
+Regular expression used to match the station id. Analog to the
+\f(CR\-\-match\-station\fP command line option.
+.RE
+.sp
+Column #2
+.RS 4
+Regular expression used to match the channel id. Analog to the
+\f(CR\-\-match\-channel\fP command line option.
+.RE
+.sp
+Column #3
+.RS 4
+Regular expression used to match the network id. Analog to the
+\f(CR\-\-match\-network\fP command line option.
+.RE
+.sp
+Column #4
+.RS 4
+Regular expression used to match the location id. Analog to the
+\f(CR\-\-match\-location\fP command line option.
+.RE
+.sp
+Column #5
+.RS 4
+The start time of the processed miniSEED record must be later than this
+\fITIMEMOMENT\fP. Analog to the \f(CR\-\-after\-time\fP command line option.
+.RE
+.sp
+Column #6
+.RS 4
+The start time of the processed miniSEED record must be earlier than
+this \fITIMEMOMENT\fP. Analog to the \f(CR\-\-before\-time\fP command line option.
+.RE
+.sp
+Column #7
+.RS 4
+Set the station id to this value. Analog to the \f(CR\-\-set\-station\fP command
+line option.
+.RE
+.sp
+Column #8
+.RS 4
+Set the channel id to this value. Analog to the \f(CR\-\-set\-channel\fP command
+line option.
+.RE
+.sp
+Column #9
+.RS 4
+Set the network id to this value. Analog to the \f(CR\-\-set\-network\fP command
+line option.
+.RE
+.sp
+Column #10
+.RS 4
+Set the location id to this value. Analog to the \f(CR\-\-set\-location\fP
+command line option.
+.RE
+.sp
+Empty lines in the file are skipped. Everything following a \f(CR#\fP character
+(up to the end of the line) is considered to be a comment and is ignored
+as well. If a field in the table contains the wildcard character \f(CR*\fP the
+respective condition or action is ignored. In addition, the actions in
+column #7 to #10 also accept the \fIRESET\fP keyword, which will clear/remove
+any content from the corresponding miniSEED header field.
+.sp
+There is no functional difference between a rule file containing a
+single, ten column table row or giving the ten corresponding options
+mentioned above at the command line directly. However, using a rule file
+it is possible to define as many editing rules at the same time as the
+table contains rows, while at the command line you are limited to a
+single editing rule per program run.
+.RE
+.sp
+The following group of command line options define conditions that must
+be all fulfilled before any action is applied to the miniSEED header.
+.sp
+\-\-match\-station=\fIREGEX\fP
+.RS 4
+Modify miniSEED records, where the station id header field is matched by
+the given regular expression. You can use the two wild card characters
+(\f(CR*\fP, \f(CR?\fP) when specifying the \fIREGEX\fP search pattern.
+.RE
+.sp
+\-\-match\-channel=\fIREGEX\fP
+.RS 4
+Modify miniSEED records, where the channel id header field is matched by
+the given regular expression. You can use the two wild card characters
+(\f(CR*\fP, \f(CR?\fP) when specifying the \fIREGEX\fP search pattern.
+.RE
+.sp
+\-\-match\-network=\fIREGEX\fP
+.RS 4
+Modify miniSEED records, where the network id header field is matched by
+the given regular expression. You can use the two wild card characters
+(\f(CR*,\fP \f(CR?\fP) when specifying the \fIREGEX\fP search pattern.
+.RE
+.sp
+\-\-match\-location=\fIREGEX\fP
+.RS 4
+Modify miniSEED records, where the location id header field is matched by
+the given regular expression. You can use the two wild card characters
+(\f(CR*\fP, \f(CR?\fP) when specifying the \fIREGEX\fP search pattern.
+.RE
+.sp
+\-\-equals\-sample\-rate=\fIRATE\fP
+.RS 4
+Select miniSEED records of the given sampling rate for editing. The
+sample rate is given in samples per second.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+Currently, only natural numbers are accepted as \fIRATE\fP for the data
+sample rate. Please use the \f(CR\-\-equals\-sample\-period\fP option for cases
+where the sample rate is smaller than one sample per second.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-equals\-sample\-period=\fIPERIOD\fP
+.RS 4
+Select miniSEED records of the given sampling period for editing. The
+sample period is given in seconds between samples.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+Currently, only natural numbers are accepted as \fIPERIOD\fP for the sample
+period. Please use the \f(CR\-\-equals\-sample\-rate\fP option for cases where the
+time between samples is smaller than one second.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-equals\-timing\-quality=\fIQUALITY\fP, \-\-less\-than\-timing\-quality=\fIQUALITY\fP, \-\-more\-than\-timing\-quality=\fIQUALITY\fP
+.RS 4
+Select miniSEED records based on their current timing \fIQUALITY\fP value. The
+value is either matched exactly ("equals") or acts as threshold for a
+"less/more than" comparison.
+.sp
+Timing quality values ranging from 0 to 100 are accepted as arguments to the
+three command line options.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+The timing quality value is stored in the optional blockette #1001.
+None of the three conditions will match if the miniSEED record does
+not contain a blockette #1001.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-after\-time=\fITIMEMOMENT\fP
+.RS 4
+Only consider (complete) miniSEED records with a \fIstart time\fP after
+(including) the given \fITIMEMOMENT\fP for editing. The format for the
+\fITIMEMOMENT\fP string is \fIYYYY\-MM\-DD\fPT\fIHH:MM:SS.ssssss\fP where
+\fIYYYY\-MM\-DD\fP represents the date and \fIHH:MM:SS.ssssss\fP the time
+(fractions of seconds will be rounded to microsecond accuracy). The
+letter \f(CRT\fP in between date and time is used to distinguish between date
+and time part and must be given as well. Example: To restrict the
+editing rule to miniSEED records beginning after 1pm on March 27th, 2007
+use the option \f(CR\-\-after\-time=2007\-03\-27T13:00:00\fP.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Warning
+.ps -1
+.br
+.sp
+The minimal "work unit" of the \fBmseed2mseed\fP utility is a complete
+miniSEED record! If a record begins before the \fITIMEMOMENT\fP but
+extends into the requested time window the "after time" condition
+is \fBnot\fP matched.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-before\-time=\fITIMEMOMENT\fP
+.RS 4
+Only modify miniSEED records with a \fIstart time\fP header field before
+(not including) the given \fITIMEMOMENT\fP. For the format of \fITIMEMOMENT\fP
+please see the \f(CR\-\-after\-time\fP option above.
+.RE
+.sp
+The remaining command line options describe the actions the editing rule
+will perform if all given conditions were met by the miniSEED record.
+.sp
+\-\-set\-station=\fISTATION\fP
+.RS 4
+Set the station id header field. The \fISTATION\fP may be up to five
+characters long. If the given string is shorter it will be (right\-)
+padded with space characters. If no \fISTATION\fP name is given after the
+equal sign, the station id header field will be reset/cleared. The same
+effect can also be obtained by using the \f(CRRESET\fP keyword instead of a
+\fISTATION\fP name.
+.RE
+.sp
+\-\-set\-channel=\fICHANNEL\fP
+.RS 4
+Set the channel id. The \fICHANNEL\fP may be up to three characters long. A
+shorter string will be (right\-) padded with space characters. If no new
+\fICHANNEL\fP name is given after the equal sign, the channel id header
+field will be reset/cleared. The same effect can be obtained by using
+the \f(CRRESET\fP keyword instead of a \fICHANNEL\fP name.
+.RE
+.sp
+\-\-set\-network=\fINETWORK\fP
+.RS 4
+Set the network id. The \fINETWORK\fP may be up to two characters long. If
+the given network string is less than two characters long it will be
+(right\-) padded with space characters. If no \fINETWORK\fP name is given
+after equal sign, the network id header field will be reset/cleared. The
+same effect can also be obtained by using the \f(CRRESET\fP keyword instead of a
+\fINETWORK\fP name.
+.RE
+.sp
+\-\-set\-location=\fILOCATION\fP
+.RS 4
+Set the location id. The \fILOCATION\fP may be up to two characters long.
+Again, shorter strings will be (right\-) padded with space characters. If
+the new \fILOCATION\fP name is missing, the location id header field will be
+reset/cleared. Alternatively, the \f(CRRESET\fP keyword can be given as new
+\fILOCATION\fP to obtain the same effect.
+.RE
+.sp
+\-\-set\-timing\-quality=\fIQUALITY\fP
+.RS 4
+Set the timing quality information of the miniSEED record to the given
+\fIQUALITY\fP value.
+.sp
+Usually, the timing \fIQUALITY\fP is given as a value in the range from \f(CR0\fP (bad)
+to \f(CR100\fP (maximal accuracy). Alternatively, the function also accepts the
+words \f(CRRESET\fP, \f(CRBAD\fP and \f(CRGOOD\fP as arguments. The keywords correspond to
+quality values of 0, 1% and 100% respectively.
+.sp
+What the timing quality value actually means is vendor specific!
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+There is some ambiguity on how to interpret a timing quality of zero
+(\f(CR0\fP). It could mean that no information about the timing quality of
+the recorded data is available and the value was simply not set at
+all. However, it also could be interpreted as the absolut worst timing
+quality.
+.br
+For that reason it is probably a good idea to use a value of \f(CR1\fP to
+indicate awful data quality and to reserve a value of \f(CR0\fP for
+situations were no information about the timing quality is available.
+.sp .5v
+.RE
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+The timing quality is stored in the optional miniSEED blockette #1001.
+In case that the current miniSEED record does not already contain a
+blockette #1001 the \fBmseed2mseed\fP program will automatically try to
+add the missing blockette to the record.
+.br
+Depending on the available space inside the miniSEED record, this may
+fail!
+.sp .5v
+.RE
+.RE
+.sp
+\-\-shift\-time=\fIOFFSET\fP
+.RS 4
+Shift the start time of the miniSEED record by the given time span. The
+format of the \fIOFFSET\fP value is \fISS.ssssss\fP and is given in seconds.
+Negative numbers will shift the start time towards earlier times.
+.RE
+.sp
+\-\-bugfix\-edr\-start\-time
+.RS 4
+Correct buggy start times recorded by certain EDR\-209/210 data loggers.
+At least the r3.35 firmware (maybe earlier releases as well) of the EDR
+data logger contains a bug where some but not all record start times are
+slightly off by 0.0001s (corresponding to a "tick" in miniSEED lingo).
+Fortunately, this is not a digitizing problem but simply caused by a
+wrong (start) time value being written into the fixed header of the
+record. (The root of the bug seems to be that a floating point number
+(representing the time) gets truncated instead of being rounding.)
+.sp
+Of course the bug has been fixed by EarthDate already, however, this
+command line option remains so that miniSEED files that were recorded in
+the past can be corrected as well.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Warning
+.ps -1
+.br
+.sp
+It is unsafe to apply this "BugFix" to miniSEED data that is not
+affected by the EDR firmware bug! It probably will irreversible
+screw up your start times!
+.sp .5v
+.RE
+.RE
+.sp
+\-\-bugfix\-gps\-epoch
+.RS 4
+.sp
+Correct start times of miniSEED recordings affected by GPS week number
+rollover (WNRO) issue.
+.sp
+The GPS satellite system tracks time by using two counters. A week
+number counter (relative to the GPS epoch) and a milliseconds counter
+relative to the beginning of the week. Unfortunately, the week number
+counter is only 10 bits long, hence a "rollover" happens every 1024
+weeks (about 19.7 years). This is very much like a classical "integer
+overflow" in programming or the infamous "year 2000 problem" (Y2K).
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+The last epoch "rollover" of the GPS satellite system occurred
+on April 6th, 2019. However, depending on the build\-in GPS
+receiver firmware, WNRO issues may also occur on other dates.
+For example the GPS receiver build into an EarthData PR6\-24
+Logger (EDL) reports wrong times starting July 28th, 2019!
+(There is, of course, a firmware update to correct the issue.)
+.sp .5v
+.RE
+.sp
+Using this command line option will, if necessary, automatically apply
+one of two pre\-configured time corrections to miniSEED data. (Please
+also see the examples section below.)
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+Shift the start times of all miniSEED records that are seemingly older
+than half a GPS epoch (512 weeks, relative to \fItoday\fP/\fInow\fP) by adding
+one full GPS epoch (1024 weeks) to the respective miniSEED start time.
+.sp
+This will take care of the standard fault were the recorded time is off by a
+full GPS epoch after the week number rollover (WNRO).
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+It will shift the start time of miniSEED records seemingly recorded in
+the year 2031 by 388961152 seconds into the past (i.e. towards "today").
+.sp
+This correction applies to EarthData PR6\-24 recorded miniSEED data where
+the WNRO error first shifts times by one GPS epoch into the past. But
+because the PR6\-24 hardware did not exist before the year 2000, the
+build\-in firmware is not designed to handle dates before the year 2000!
+That is why an internal number overflow can subsequently catapult the
+recording dates into the year 2031!
+.RE
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Warning
+.ps -1
+.br
+.sp
+It is unsafe to apply this "BugFix" across\-the\-board to all
+miniSEED data. The time shift (1024 weeks into the future) will
+be applied to every miniSEED record claiming to be 512 weeks
+(about 10 years) old or older. (Here, the age of the record is
+taken relative to \fItoday\fP/\fInow\fP, which is the day on which the
+\fBmseed2mseed\fP is run.) This will become very problematic when
+working with historic data!
+.sp .5v
+.RE
+.RE
+.SH "ENVIRONMENT"
+.sp
+The following environment variables can optionally be used to influence
+the behavior of the GIPPtool utilities.
+.sp
+GIPPTOOLS_HOME
+.RS 4
+This environment variable is used to find the location of the GIPPtools
+installation directory. In particular, the Java class files that make up the
+GIPPtools are expected to be in the \f(CRjava\fP subdirectory of \fBGIPPTOOLS_HOME\fP.
+.RE
+.sp
+GIPPTOOLS_JAVA
+.RS 4
+The utilities of the GIPPtools are written in the programming language Java
+and consequently need a Java Runtime Environment (JRE) to execute. Use this
+variable to specify the location of the JRE which should be used.
+.RE
+.sp
+GIPPTOOLS_OPTS
+.RS 4
+You can use this environment variable for additional fine\-tuning of the
+Java runtime environment. This is typically used to set the Java heap size
+available to GIPPtool programs.
+.RE
+.sp
+It is usually not necessary to define any of those variables as suitable
+values should be selected automatically. However, if the automatic detection
+build into the start script fails, or you need to choose between different
+GIPPtool or Java runtime releases installed on your computer, these
+environment variables might become quite helpful to troubleshoot the
+situation.
+.SH "DIAGNOSTICS"
+.sp
+Occasionally, the \fBmseed2mseed\fP utility will produce user feedback. In general,
+user messages are classified as \fIINFO\fP, \fIWARNING\fP or \fIERROR\fP. The \fIINFO\fP
+messages are only displayed when the \f(CR\-\-verbose\fP command line option is used.
+They usually report about the progress of the program run, give statistical
+information or write a final summary.
+.sp
+More important are \fIWARNING\fP messages. In general, they warn about (possible)
+issues that may influence the outcome. Although the program will continue
+with execution, you certainly should check the results carefully. You might
+not have gotten what you (thought you) asked for. Finally, \fIERROR\fP messages
+inform about problems that can not be resolved automatically. Program
+execution usually stops and the user must fix the cause of the error first.
+.sp
+A good method to see what will happen is to use the \f(CR\-\-dry\-run\fP and the
+\f(CR\-\-verbose\fP command line option at the same time. If user feedback indicates
+that \fBmseed2mseed\fP works as expected it can be started again, this time without
+the \f(CR\-\-dry\-run\fP option.
+.SH "EXIT CODES"
+.sp
+Use the following program exit codes when calling \fBmseed2mseed\fP from scripts
+or other programs to see if \fBmseed2mseed\fP finished successfully. Any non\-zero
+code indicates an \fIERROR\fP!
+.sp
+0
+.RS 4
+Success.
+.RE
+.sp
+64
+.RS 4
+Command line syntax or usage error.
+.RE
+.sp
+66
+.RS 4
+An input file did not exist or was not readable.
+.RE
+.sp
+74
+.RS 4
+I/O error.
+.RE
+.sp
+99
+.RS 4
+Other, unspecified errors.
+.RE
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+To convert an \fIinput.mseed\fP file to big endian byte order and a record
+size of 512 bytes use:
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-byte\-order=BIG\-ENDIAN \-\-record\-size=512 ./input.mseed > output.mseed
+.fi
+.if n .RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+Your field data contain the recorder unit number (something like \fIe3100\fP)
+in the station id field of the miniSEED file. However, for processing you
+would rather work with the name of the seismic station (in this example
+\fIABCDE\fP is used). To \fIselectively\fP change the station id in the miniSEED
+header for all files found in the input directory use the following command:
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-match\-station=e3100 \-\-set\-station=ABCDE \-output\-dir=./output ./input
+.fi
+.if n .RE
+.sp
+Afterwards you can pick up the updated data set, i.e. the modified miniSEED
+files as well as the unmodified files (recorded by a different unit) in the
+output directory.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 3." 4.2
+.\}
+To remove the location id from \fIall\fP input files in the \fI./input\fP
+directory, you would use one of the two following commands:
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-set\-location= \-\-output\-dir=./modified ./input
+.fi
+.if n .RE
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-set\-location=RESET \-\-output\-dir=./modified ./input
+.fi
+.if n .RE
+.sp
+Please note that the \fIRESET\fP keyword can also be used if you work with a rule
+file (see option \fB\-\-rules\fP).
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 4." 4.2
+.\}
+To change the channel id from \fIp0\fP to \fIEHZ\fP for all files sampled with
+100 Hz you could use the following command:
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-match\-channel=p0 \-\-equals\-sample\-rate=100 \-\-set\-channel=EHZ \-\-output\-dir=./modified ./input
+.fi
+.if n .RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 5.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 5." 4.2
+.\}
+Manually setting the \fItiming quality\fP.
+.sp
+During a field campaign, some rodent ate the cable of your antenna on
+\fIMay 22nd, 2020\fP and as a consequence the data logger \fIe3100\fP lost GPS
+reception. To indicate the bad quality of the timing information you could
+use:
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-match\-station=e3100 \-\-after\-time=2020\-05\-22 \-\-set\-timing\-quality=1 \-\-output\-dir=./modified ./input
+.fi
+.if n .RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 6.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 6." 4.2
+.\}
+Due to a firmware bug, some GPS receivers providing time information to
+your loggers malfunction (the date is off by precisely two years). Now
+your field data contains files recorded in 2013 (correct) and miniSEED
+files that were seemingly recorded in 2011 (wrong). To correct the wrong
+date you could use the following:
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-before\-time=2012\-01\-01 \-\-shift\-time=+63072000 \-\-output\-dir=./corrected\-time ./raw\-data
+.fi
+.if n .RE
+.sp
+This will add two years (2*365*24*60*60=63072000 seconds) to all files that
+were (seemingly) recorded before the year 2012.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+Watch out for leap years and leap seconds when working with "times"!
+The \fBmseed2mseed\fP utility will blindly shift the start times by the
+given offset and ignore any intricacies of the Gregorian calendar.
+.sp .5v
+.RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 7.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 7." 4.2
+.\}
+Use the following command to correct faulty times in miniSEED records
+that were caused by the GPS week number rollover (WNRO) bug:
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-bugfix\-gps\-epoch \-\-output\-dir=./corrected\-time ./raw\-data
+.fi
+.if n .RE
+.sp
+The command above is functionally equivalent to executing the two
+commands:
+.sp
+.if n .RS 4
+.nf
+mseed2mseed \-\-before\-time=2001\-12\-31 \-\-shift\-time=619315200 \-\-output\-dir=./temp ./raw\-data
+mseed2mseed \-\-after\-time=2031\-01\-01 \-\-shift\-time=\-388961152 \-\-output\-dir=./corrected\-time ./temp
+.fi
+.if n .RE
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+It is unnecessary to also consider the leap seconds that were added
+during the last GPS epoch. The leap second information transmitted by
+the GPS satellites (and used by the recorder) is correct for the moment
+of recording. It is only the problem of determining the correct epoch
+that the loggers do not know how to handle!
+.sp .5v
+.RE
+.RE
+.SH "FILES"
+.sp
+$GIPPTOOLS_HOME/bin/mseed2mseed
+.RS 4
+The \fBmseed2mseed\fP "program". Usually just a copy of or symbolic link pointing
+to the standard GIPPtools start script.
+.RE
+.sp
+$GIPPTOOLS_HOME/bin/gipptools
+.RS 4
+The GIPPtools start script. Almost all utilities of the GIPPtools package
+are started from this shell script.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgipptools\fP(1), \fBcube2ascii\fP(1), \fBcube2mseed\fP(1), \fBcube2segy\fP(1),
+\fBcubeevent\fP(1), \fBcubeinfo\fP(1), \fBmseed2ascii\fP(1), \fBmseed2pdas\fP(1),
+\fBmseed2segy\fP(1), \fBmseedcut\fP(1), \fBmseedinfo\fP(1), \fBmseedrecover\fP(1),
+\fBmseedrename\fP(1)
+.SH "BUGS AND CAVEATS"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+The minimal "work unit" of the \fBmseed2mseed\fP utility is a complete miniSEED
+record! Use the \fBmseedcut\fP program for sample precise cutting.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+The \fBmseed2mseed\fP utility is only intended for modifying miniSEED header
+fields. It will not change the actual time series data contained in the
+input.
+.br
+However, changing byte order, record size or encoding method forces
+\fBseed2mseed\fP to re\-encoded the input data. Due to the re\-encoding, the
+resulting output might differ from the input in more than just the modified
+header fields! Nevertheless, looking at the actual samples (e.g. with
+\fBmseed2ascii\fP) shows that the actual values of the time series have not
+changed!
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\fBMseed2mseed\fP has way to many command line options. Sorry! Maybe consider
+using a rule file (see option \fB\-\-rules\fP) to shorten your command line?
+.RE

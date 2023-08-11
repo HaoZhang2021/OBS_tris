@@ -1,0 +1,454 @@
+'\" t
+.\"     Title: cubeinfo
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2022-12-06
+.\"    Manual: GIPPtools Command Manual
+.\"    Source: Release 2022.340
+.\"  Language: English
+.\"
+.TH "CUBEINFO" "1" "2022-12-06" "Release 2022.340" "GIPPtools Command Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+cubeinfo \- summarize the content of a Cube recording
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+cubeinfo  [\-v|\-\-verbose] [\-\-include\-pattern=\fIPATTERN\fP]...
+          [\-\-output\-dir=\fIDIRECTORY\fP [\-\-force\-overwrite]]
+          [\-\-format=\fIFORMAT\fP]
+          [\fIfile\fP | \fIdirectory\fP]...
+.fi
+.br
+.sp
+.sp
+.nf
+cubeinfo  [\-h|\-\-help] [\-\-version] [\-\-sysinfo]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+\fBCubeinfo\fP reads from a \fIfile\fP (or standard input) and returns a short
+textual report of the content of the read Cube recording. If a \fIdirectory\fP
+is given instead, \fBcubeinfo\fP searches recursively for input files inside
+the directory.
+.sp
+The report is written to standard output (i.e. console) or saved in an
+output directory (use option \f(CR\-\-output\-dir\fP). Different report variants
+(\fISUMMARY\fP, \fIDUMP\fP, ...) are predefined and can be selected using the
+\f(CR\-\-format\fP option.
+.SH "OPTIONS"
+.sp
+The program pretty much follows expected Unix command line syntax. Some
+command line options have two variants, one long and an additional short one
+(for convenience). These are shown below, separated by commas. However, most
+options only have a long variant. The \(oq\f(CR=\fP\(cq for options that take a
+parameter is required and can not be replaced by a whitespace.
+.sp
+\-h, \-\-help
+.RS 4
+Print a brief summary of all available command line options and exit.
+.RE
+.sp
+\-\-version
+.RS 4
+Print the \fBcubeinfo\fP release information and exit.
+.RE
+.sp
+\-\-sysinfo
+.RS 4
+Provide some basic system information and exit.
+.RE
+.sp
+\-v, \-\-verbose
+.RS 4
+This option increases the amount of information given to the user during
+program execution. By default, (i.e. without this option) \fBcubeinfo\fP only
+reports warnings and errors. (See the diagnostics section below.)
+.RE
+.sp
+\-\-include\-pattern=\fIPATTERN\fP
+.RS 4
+Only process files whose filename matches the given \fIPATTERN\fP. Files with
+a name not matching the search \fIPATTERN\fP will be ignored. This option is
+quite useful to speed up recursive searches through large subdirectory trees
+and can be used more than once in the same command line.
+.sp
+You can use the two wild card characters (\f(CR*\fP and \f(CR?\fP) when specifying a
+\fIPATTERN\fP (e.g. \f(CR*.123\fP). Or alternatively, you can also use a predefined
+filter called \f(CRGIPP\fP that can be used to exclude all files not following the
+usual GIPP naming convention for files recorded by Cubes.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+The search \fIPATTERN\fP is only applied to the filename part and not
+to the full pathname of a file.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-output\-dir=\fIDIRECTORY\fP
+.RS 4
+Save the resulting reports to this \fIDIRECTORY\fP. The directory must already
+exist and be writable! Already existing files in that directory will not be
+overwritten unless the option \f(CR\-\-force\-overwrite\fP is used as well.
+.RE
+.sp
+\-\-force\-overwrite
+.RS 4
+If this option is used, already existing files in the output directory
+will be overwritten without mercy!
+.sp
+The default behavior however is \fBnot\fP to overwrite already existing files.
+Instead, a new file is created with an additional number in between filename
+and extension.
+.RE
+.sp
+\-\-format=\fIFORMAT\fP
+.RS 4
+.sp
+Select one of the following predefined output formats:
+.sp
+\fIINFO\fP
+.RS 4
+Give a brief, minimal description of the content of the Cube recording.
+The report will contain the Cube instrument id and configuration,
+battery levels, as well as the approximate start and stop time of the
+recording. This is the default output format.
+.RE
+.sp
+\fISUMMARY\fP
+.RS 4
+A slightly more verbose description of the content also includes
+statistics about how many data blocks (header, trailer, samples, GPS, ...)
+are contained in the Cube recording.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+This output format requires that the Cube file must be read
+completely, which may take a few seconds for extensive recordings.
+.sp .5v
+.RE
+.RE
+.sp
+\fIGPS\fP
+.RS 4
+List the content of all GPS blocks contained in the Cube recording. This
+output format is especially useful to obtain the actual position of a
+Cube while it was recording. You can also get a rough idea about the
+quality of the received GPS signal.
+.sp
+The returned information will depend on the build\-in/connected clock
+hardware, which differs between Cube recorders. Usually the report
+contains at least the Cube block number and the time contained in the
+GPS block. Additional information is provided on an "as available" base
+and may include the number of leap seconds between GPS and UTC time (as
+reported by the GPS satellite and/or as officially announced by the
+International Earth Rotation and Reference Systems Service,
+.URL "http://www.iers.org" "IERS" ","
+the type of the GPS fix (2D, 3D, ...), the
+position of the Cube (latitude, longitude and maybe elevation),
+temperature (measured by the clock hardware), the number of satellites
+received, and/or the age of the GPS fix ("less than 10s old").
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+The time information provided by the GPS output format is not
+identical to the recording time of any sample! Additional time
+corrections (depending amongst others on Cube hardware and
+configured sample rate) must be applied first to obtain the
+correct (precise) recording time.
+.sp .5v
+.RE
+.RE
+.sp
+\fIDEBUG\fP
+.RS 4
+Returns a textual representation of every data block contained in the
+Cube file. This rather voluminous report includes everything there is
+and should probably be used for debugging purpose only!
+.RE
+.RE
+.SH "ENVIRONMENT"
+.sp
+The following environment variables can optionally be used to influence
+the behavior of the GIPPtool utilities.
+.sp
+GIPPTOOLS_HOME
+.RS 4
+This environment variable is used to find the location of the GIPPtools
+installation directory. In particular, the Java class files that make up the
+GIPPtools are expected to be in the \f(CRjava\fP subdirectory of \fBGIPPTOOLS_HOME\fP.
+.RE
+.sp
+GIPPTOOLS_JAVA
+.RS 4
+The utilities of the GIPPtools are written in the programming language Java
+and consequently need a Java Runtime Environment (JRE) to execute. Use this
+variable to specify the location of the JRE which should be used.
+.RE
+.sp
+GIPPTOOLS_OPTS
+.RS 4
+You can use this environment variable for additional fine\-tuning of the
+Java runtime environment. This is typically used to set the Java heap size
+available to GIPPtool programs.
+.RE
+.sp
+GIPPTOOLS_LEAP
+.RS 4
+The GIPPtools require up\-to\-date leap second information to correctly
+interpret Cube files. Usually, this information is obtained from the
+\f(CRleap\-seconds.list\fP file located in the config subdirectory of the
+GIPPtools installation directory. This environment variable can be used
+to provide a more up\-to\-date leap second list to GIPPtool programs.
+.RE
+.sp
+It is usually not necessary to define any of those variables as suitable
+values should be selected automatically. However, if the automatic detection
+build into the start script fails, or you need to choose between different
+GIPPtool or Java runtime releases installed on your computer, these
+environment variables might become quite helpful to troubleshoot the
+situation.
+.SH "DIAGNOSTICS"
+.sp
+Occasionally, the \fBcubeinfo\fP utility will produce user feedback. In general,
+user messages are classified as \fIINFO\fP, \fIWARNING\fP or \fIERROR\fP. The \fIINFO\fP
+messages are only displayed when the \f(CR\-\-verbose\fP command line option is used.
+They usually report about the progress of the program run, give statistical
+information or write a final summary.
+.sp
+More important are \fIWARNING\fP messages. In general, they warn about (possible)
+issues that may influence the outcome. Although the program will continue
+with execution, you certainly should check the results carefully. You might
+not have gotten what you (thought you) asked for. Finally, \fIERROR\fP messages
+inform about problems that can not be resolved automatically. Program
+execution usually stops and the user must fix the cause of the error first.
+.SH "EXIT CODES"
+.sp
+Use the following program exit codes when calling \fBcubeinfo\fP from scripts
+or other programs to see if \fBcubeinfo\fP finished successfully. Any non\-zero
+code indicates an \fIERROR\fP!
+.sp
+0
+.RS 4
+Success.
+.RE
+.sp
+64
+.RS 4
+Command line syntax or usage error.
+.RE
+.sp
+65
+.RS 4
+Data format error. (The input was not a valid Cube recording.)
+.RE
+.sp
+66
+.RS 4
+An input file did not exist or was not readable.
+.RE
+.sp
+70
+.RS 4
+Error in internal program logic.
+.RE
+.sp
+74
+.RS 4
+I/O error.
+.RE
+.sp
+99
+.RS 4
+Other, unspecified errors.
+.RE
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+To learn about the content of the single Cube file called \f(CRrecording.cube\fP,
+you simply use one of the following:
+.sp
+.if n .RS 4
+.nf
+cubeinfo  recording.cube
+.fi
+.if n .RE
+.sp
+.if n .RS 4
+.nf
+cubeinfo < recording.cube
+.fi
+.if n .RE
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+The first variant will usually be much faster as \fBcubeinfo\fP will
+jump directly from the beginning of the file, where it reads the
+"header block", to the end of the file where the "trailer block"
+required by the INFO report is located.
+.br
+The second variant does not have that option as it must always read
+the complete data stream piped in from console. There is, however,
+no significant difference when requesting a report format other than
+the default INFO format as the complete recording must be read for
+other predefined report formats.
+.sp .5v
+.RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+To get information about how many data blocks are contained in the Cube
+file \f(CR02161251.034\fP use the \fISUMMARY\fP output format:
+.sp
+.if n .RS 4
+.nf
+cubeinfo \-\-format=SUMMARY  02161251.034
+.fi
+.if n .RE
+.sp
+This will not only return a table of the fields contained in the header
+and trailer block of the Cube file but also count every data block
+contained in the file and report those statistics too.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+Using the \fISUMMARY\fP output format is a convenient method to quickly
+check if the Cube file is "complete". If you suspect your Cube
+recording was cut\-off early or might be otherwise damaged you can
+look for header, trailer and end\-of\-file block counts. A sound Cube
+file should contain exactly one of each!
+.sp .5v
+.RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 3." 4.2
+.\}
+To find out at which coordinates the Cube was placed when it recorded
+the file \f(CR02161251.034\fP you use \fIGPS\fP report format:
+.sp
+.if n .RS 4
+.nf
+cubeinfo \-\-format=GPS  02161251.034
+.fi
+.if n .RE
+.sp
+The resulting output contains, besides other information, the coordinates
+(marked as \fIlat\fP and \fIlon\fP) of the Cube in degrees. Depending on the build\-in
+GPS hardware additional information about elevation might or might not be
+available.
+.RE
+.SH "FILES"
+.sp
+$GIPPTOOLS_HOME/bin/cubeinfo
+.RS 4
+The \fBcubeinfo\fP "program". Usually just a copy of or symbolic link pointing
+to the standard GIPPtools start script.
+.RE
+.sp
+$GIPPTOOLS_HOME/bin/gipptools
+.RS 4
+The GIPPtools start script. Almost all utilities of the GIPPtools package
+are started from this shell script.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgipptools\fP(1), \fBcube2ascii\fP(1), \fBcube2mseed\fP(1), \fBcube2segy\fP(1),
+\fBcubeevent\fP(1), \fBmseed2ascii\fP(1), \fBmseed2mseed\fP(1), \fBmseed2pdas\fP(1),
+\fBmseed2segy\fP(1), \fBmseedcut\fP(1), \fBmseedinfo\fP(1), \fBmseedrecover\fP(1),
+\fBmseedrename\fP(1)
+.SH "BUGS AND CAVEATS"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+If a Cube file was cut\-off early (i.e. it does not contain a trailer
+block at the end of the recording) no information about the end of the
+recording can be given! Although this should be obvious it always seems
+to surprise the user.
+.RE

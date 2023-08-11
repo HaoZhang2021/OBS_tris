@@ -1,0 +1,45 @@
+# GIPPtools - A collection of programs for (seismic) data pre-processing.
+#
+# Copyright (C) 2009-2021 Christof Lendl (GFZ Potsdam, lendl@gfz-potsdam.de)
+#
+# This work is licensed under the Creative Commons Attribution 4.0
+# International License. To view a copy of this license, visit
+# http://creativecommons.org/licenses/by/4.0/./
+#
+# ---------------------------------------------------------------------------
+#                cube2ascii / cube2mseed / mseedcut - event file
+# ---------------------------------------------------------------------------
+#
+# Event files are used by 'cube2ascii', 'cube2mseed' and 'mseedcut' to select 
+# more than one time window per program run.
+#
+# Syntax rules:
+# - Everything after a '#' character up to the end of line is considered to
+#   be a comment (and will be ignored).
+# - All empty lines are ignored as well.
+# - Any space character or tab-stop in a line containing (any) text will be
+#   interpreted as text column separator! The use of spaces in strings is not
+#   supported. Because of this you must use '_' or the letter 'T' to combine
+#   date and time information to one single string. This is relevant for the
+#   first "start time" column.
+# - The first column ("start time") is mandatory! It is interpreted analog to
+#   the '--trace-start' command line option.)
+# - The other two columns (time window length and time shift that should be
+#   applied to the time window) are optional. The columns correspond to the
+#   '--trace-length' and '--trace-offset' command line option.
+# - Columns are always counted from the beginning of the line. Therefore you
+#   cannot give a third column "window offset" value if the second column
+#   ("window length") is missing!
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+#      start time              window length [s]     shift window [s]
+# ---------------------------------------------------------------------------
+
+  2009-10-04T16:50:00                300                  +0
+  2009-10-04T16:55                   300.0                 0.0
+  2009-10-04T17:00:00.000000         450                   0
+  2009-10-04_17:10:00                300                -300
+
+# --- fin -------------------------------------------------------------------

@@ -1,0 +1,991 @@
+'\" t
+.\"     Title: cube2segy
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2022-12-06
+.\"    Manual: GIPPtools Command Manual
+.\"    Source: Release 2022.340
+.\"  Language: English
+.\"
+.TH "CUBE2SEGY" "1" "2022-12-06" "Release 2022.340" "GIPPtools Command Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+cube2segy \- convert Cube data to SEG\-Y format
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+cube2segy  \-\-project=\fIFILE\fP
+           \-\-shot\-gather=\fIFFIDs\fP | \-\-receiver\-gather=\fICHANNELs\fP
+           [\-v|\-\-verbose] [\-\-include\-pattern=\fIPATTERN\fP]...
+           [\-\-index\-cache=\fIFILE\fP]
+           [\-\-timing\-control=\fIALGORITHM\fP] [\-\-fringe\-samples=\fIMODE\fP]
+           [\-\-output\-dir=\fIDIRECTORY\fP [\-\-force\-overwrite] [\-\-force\-concat]]
+           [\-\-segy\-format=\fIFORMAT\fP] [\-\-trace\-length=\fIDURATION\fP]
+           [\-\-trace\-offset=\fISHIFT\fP] [\-\-reduction\-velocity=\fIVELOCITY\fP]
+           \fIfile\fP | \fIdirectory\fP...
+.fi
+.br
+.sp
+.sp
+.nf
+cube2segy  [\-h|\-\-help] [\-\-version] [\-\-sysinfo]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+The GIPPtool utility \fBcube2segy\fP gathers seismic data from one or more
+recorders and integrates the traces into seismic sections. It supports the
+creation of shot as well as receiver gathers. You can switch between the two
+gather modes by specifying \f(CR\-\-shot\-gather\fP or \f(CR\-\-receiver\-gather\fP at the
+command line. The option \f(CR\-\-segy\-format\fP is used to further specify the
+output file format (SEG\-Y, Seismic Unix, ...).
+.sp
+To convert the recorded data into seismic sections, the program must know
+about the setup of the experiment. This is done by providing a \fIproject file\fP
+(command line option \f(CR\-\-project\fP) containing information about the location
+of every shot and receiver point in the experiment as well as the times when
+the receivers were actually recording, respectively when the sources were
+triggered.
+.sp
+After parsing the project file, the program will next index the recorded
+seismic data contained in the files and directories given at the command
+line. This step is necessary so that the program later knows which of the
+input files contain the traces required for writing the seismic section. If
+a \fIdirectory\fP is given at the command line, the program searches recursively
+for input files inside the directory. The search can be shortened to contain
+only files matching a pattern given by the \f(CR\-\-include\-pattern\fP option. If
+you plan to use this program repeatedly on the same dataset, you might also
+consider saving the index to a file in between program runs (option
+\f(CR\-\-index\-cache\fP).
+.sp
+After all the required information is available, the utility will begin to
+prepare (internal) lists of time windows describing what data belongs into
+the respective shot/receiver gather. This is usually done by taking the
+trigger time of the seismic source and then looking\-up, which receivers were
+actually recording at that time. However, you can further influence the
+calculation of relevant time windows by applying a reduction velocity,
+changing the trace length and/or setting a trace offset. (Please see
+\f(CR\-\-reduction\-velocity\fP, \f(CR\-\-trace\-length\fP and \f(CR\-\-trace\-offset\fP options for
+details.)
+.sp
+Finally, the information from the internal shot/receiver gather list are used
+to look\-up the respective input files in the previously created index of the
+available seismic data. The program then reads the necessary data snippets
+from the input files, converts them to SEG\-Y or Seismic Unix format and
+writes the resulting seismic sections to the current working directory or in
+a separate directory (use option \f(CR\-\-output\-dir\fP).
+.SH "OPTIONS"
+.sp
+The program pretty much follows expected Unix command line syntax. Some
+command line options have two variants, one long and an additional short one
+(for convenience). These are shown below, separated by commas. However, most
+options only have a long variant. The \(oq\f(CR=\fP\(cq for options that take a
+parameter is required and can not be replaced by a whitespace.
+.sp
+\-h, \-\-help
+.RS 4
+Print a brief summary of all available command line options and exit.
+.RE
+.sp
+\-\-version
+.RS 4
+Print the \fBcube2segy\fP release information and exit.
+.RE
+.sp
+\-\-sysinfo
+.RS 4
+Provide some basic system information and exit.
+.RE
+.sp
+\-v, \-\-verbose
+.RS 4
+This option increases the amount of information given to the user during
+program execution. By default, (i.e. without this option) \fBcube2segy\fP only
+reports warnings and errors. (See the diagnostics section below.)
+.RE
+.sp
+\-\-include\-pattern=\fIPATTERN\fP
+.RS 4
+Only process files whose filename matches the given \fIPATTERN\fP. Files with
+a name not matching the search \fIPATTERN\fP will be ignored. This option is
+quite useful to speed up recursive searches through large subdirectory trees
+and can be used more than once in the same command line.
+.sp
+You can use the two wild card characters (\f(CR*\fP and \f(CR?\fP) when specifying a
+\fIPATTERN\fP (e.g. \f(CR*.pri?\fP). Or alternatively, you can also use a predefined
+filter called \f(CRGIPP\fP that can be used to exclude all files not following the
+usual GIPP naming convention for files recorded by Cube hardware.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+The search \fIPATTERN\fP is only applied to the filename part and not
+to the full pathname of a file.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-index\-cache=\fIFILE\fP
+.RS 4
+Enable caching of the (internal) input file index. Before this program
+can write seismic sections it first must know which input files contains
+the necessary traces. For that purpose an \fIindex\fP of all available input
+files is build first. Unfortunately, since the content of all input files
+must be scanned for the index, this can be a quiet time\-consuming process.
+.sp
+To avoid lengthy, repeated scans every time the program is started, the
+\f(CR\-\-index\-cache\fP option can be used to cache the index of all input files
+in a separate \fIFILE\fP.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Important
+.ps -1
+.br
+.sp
+It is the responsibility of the user to ensure that the cached
+index is up\-to\-date and (still) corresponds to the files and
+directories given as input at the command line. If in doubt,
+simply delete the cache manually and let the utility generate
+and save a new cache file during the next program run.
+.sp .5v
+.RE
+.sp
+If the cache \fIFILE\fP already exist the index will be read from it. If the
+file does not exist (yet), the index will be saved to it after scanning
+the input files. Already existing cache files will never be overwritten!
+By default, (i.e. without this option) caching of the index is disabled.
+.RE
+.sp
+\-\-timing\-control=\fIALGORITHM\fP
+.RS 4
+.sp
+Cube data loggers keep track of the time by tagging selected sample values
+with precise time information. These (time) tagged samples are the foundation
+of the overall timing accuracy of the recording. To ensure a high precision
+it is essential to verify the integrity and premium of the recorded time tags.
+Use this option to select one of the following quality control algorithms:
+.sp
+\fILLS\fP
+.RS 4
+Compute a "local least squares" (LLS) approximation to detect outliers
+and other dubious time information.
+.sp
+The algorithm will determine the timing quality from the squared
+residual error ("misfit") of an individual time tag compared to a fitted
+line through the respective surrounding time tags. Any unexpected large
+misfit is a good indicator for the presence of a "bad" time tag (e.g. an
+outlier). All suspicious time tags are excluded from further processing.
+.sp
+This is the default timing quality control algorithm.
+.RE
+.sp
+\fIRULE\fP
+.RS 4
+Do a rule\-based evaluation of the time tags. The rules are predefined
+and hard\-coded into the program. They were determined by trial and
+error.
+.RE
+.sp
+\fINONE\fP
+.RS 4
+Skip quality control altogether! This will use any available timing
+information without further qualification.
+.RE
+.sp
+\fIFAKE\fP
+.RS 4
+This "quality control" algorithm will completely overwrite any time
+information recorded in a Cube trace with a made\-up fake time. (All
+trace start times are set to 1970\-01\-01 00:00.) Obviously, this will
+completely screw up the timing information! Use it at your own risk.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+Using the \fIFAKE\fP time algorithm will only succeed if the
+\f(CR\-\-fringe\-samples=NOMINAL\fP command line option is used as well.
+.sp .5v
+.RE
+.RE
+.sp
+The main advantage of the \fILLS\fP algorithm is its flexibility. It was
+designed to adapt to different situations and to handle different time
+keeping hardware as well. The \fIRULE\fP based algorithm is faster and much
+simpler. However, the fixed rule set only works effectively for
+anticipated situations and is limited to the current build\-in and
+well\-known GPS hardware. Future Cube generations e.g. will probably
+require an updated set of rules to reliably detect bad time tags due to
+different time keeping hardware. The \fINONE\fP "algorithm" basically disables
+any timing quality control. It should only be used if you can trust all
+time tags unconditionally (or do not care). Finally, the \fIFAKE\fP time
+algorithm is intended for worst case scenarios only, where a user
+absolutely must recover a Cube data stream that cannot be processed
+normally due to total lack of (recorded) timing information. By adding a
+fake time the Cube file(s) becomes "processable" again, although at the
+price of a completely made\-up time information.
+.sp
+In addition to the above listed algorithms, recorded time tags are also
+screened for overall data integrity (range check, checksum) and
+completeness. Also, there a certain hardware limitation common to all
+recorders of the Cube family that occasionally cause individual time
+tags to be discarded. This is done transparently in the background and
+before any of the above algorithms are applied. This cannot be
+influenced by the user!
+.RE
+.sp
+\-\-fringe\-samples=\fIMODE\fP
+.RS 4
+.sp
+Determines how to treat samples that were recorded before the first GPS time
+fix or after the last GPS time fix taken by the Cube unit. Determining the
+precise recording time of these "fringe samples" is problematic because
+without a second time tag on the other side of the sample, the precise
+sampling rate inside the segment cannot be computed. Valid options are:
+.sp
+\fISKIP\fP
+.RS 4
+Simply exclude all samples without good time control from the conversion.
+(Default)
+.RE
+.sp
+\fINOMINAL\fP
+.RS 4
+Include fringe samples assuming a perfect nominal sample rate (e.g. 50 Hz,
+100 Hz, 200 Hz, ...; as configured in the Cube recorder setup).
+.RE
+.sp
+\fICONSTANT\fP
+.RS 4
+Include fringe samples assuming a constant (linear) clock drift over the
+whole recording. The clock drift is calculated from the very first and
+last available GPS fix in the recording.
+.RE
+.sp
+Usually, a Cube recording contains only a few seconds of data before the very
+first GPS time fix occurs. At the end of recording, the time without GPS fix
+depends on the recorder configuration. (GPS running continuous or in cycled
+mode? How long is the cycle?) So, unless you power down and pick up the Cube
+unit immediately after the recording there should be no problem to just skip
+and ignore all fringe samples, which is the default behavior.
+.sp
+The situation is different however, when the Cube is deployed in locations
+without (reliable) GPS reception, e.g. in water or underground in a tunnel.
+Especially, if the Cube runs out of power before it can obtain a last GPS
+fix. Here it might become important to include any recorded sample despite
+the lack of good (GPS) time control. For these cases the \fINOMINAL\fP and
+\fICONSTANT\fP mode are intended.
+.RE
+.sp
+\-\-output\-dir=\fIDIRECTORY\fP
+.RS 4
+Save the resulting seismic sections to this \fIDIRECTORY\fP. The directory must
+already exist and be writable! Already existing files in that directory will
+not be overwritten unless the option \f(CR\-\-force\-overwrite\fP is used as well.
+.RE
+.sp
+\-\-force\-overwrite
+.RS 4
+If this option is used, already existing files in the output directory
+will be overwritten without mercy!
+.sp
+The default behavior however is \fBnot\fP to overwrite already existing files.
+Instead, a new file is created with an additional number in between filename
+and extension.
+.RE
+.sp
+\-\-force\-concat
+.RS 4
+Use this option to concatenate all resulting shot/receiver gathers into
+a single file. This can be useful if you plan to import the gathers into
+other software packages for further processing. (You only need to import
+one single file instead of many files.)
+.sp
+By default, however, a new output file is created for every single gather
+created.
+.RE
+.sp
+\-\-segy\-format=\fIFORMAT\fP
+.RS 4
+.sp
+Select one of the following predefined output formats:
+.sp
+\fISEGY\fP
+.RS 4
+Standard SEG\-Y revision 1 (default).
+.RE
+.sp
+\fISUOLD\fP
+.RS 4
+Seismic Unix (old) native binary format.
+.RE
+.sp
+\fISUXDR\fP
+.RS 4
+Seismic Unix platform independent XDR format.
+.RE
+.RE
+.sp
+\-\-project=\fIFILE\fP
+.RS 4
+Use this mandatory option to indicate the file describing the experiment
+setup. For a detailed description of the file format see the project file
+section below.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+Sometimes, this file is also called the "master" or the "geometry" file.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-shot\-gather=\fIFFIDs\fP
+.RS 4
+The resulting seismic sections are organized as shot gather. If no \fIFFID\fP
+range is specified, the program will try to write a seismic section for
+every FFID found in the projects (geometry) configuration file (see project
+file section below).
+.sp
+Alternatively, you can also specify a comma separated list of single FFIDs
+or ranges of FFIDs. Use two dots between the first and last FFID to specify
+a range. Please note that FFID lists and ranges must not contain any space
+characters!
+.sp
+Example: To produce seismic sections of the shots with FFID 1, 4, 5 and
+6 you could use \f(CR\-\-shot\-gather=1,4..6\fP.
+.RE
+.sp
+\-\-receiver\-gather=\fICHANNELS\fP
+.RS 4
+The resulting seismic sections are organized as receiver gather. If no
+\fICHANNEL\fP range is given, the program will try to write a seismic section
+for every channel found in the projects (geometry) configuration file (see
+project file section below).
+.sp
+Alternatively, you can also specify a comma separated list of single channels
+or ranges of channels. Use two dots between the first and last channel to
+specify a range. Please note that channel lists and ranges must not contain
+any space characters!
+.sp
+Example: To produce seismic sections for receivers with the channel ids
+10, 11, 24, 25 and 26 you would use \f(CR\-\-receiver\-gather=10,11,24..26\fP.
+.RE
+.sp
+\-\-trace\-length=\fIDURATION\fP
+.RS 4
+Length of the traces in the resulting seismic section. The \fIDURATION\fP is
+given in seconds. Fractions of seconds will be rounded to microsecond
+accuracy. If there are not enough samples in the input, the trace in the
+seismic section will be padded. The default trace length is one minute.
+.sp
+Example: Use \f(CR\-\-trace\-length=120\fP to obtain two minute long seismic
+sections consisting of 12000 samples per trace (assuming input data
+recorded at 100 Hz). To produce 12001 samples per trace you would use
+\f(CR\-\-trace\-length=120.01\fP as command line option.
+.RE
+.sp
+\-\-trace\-offset=\fISHIFT\fP
+.RS 4
+Use this option to shift the start time of the traces in the seismic section
+relative to the trigger time of the shot (as read from the project file).
+The \fISHIFT\fP is given in seconds. If no time offset is given, the program will
+default to begin the trace as close as possible to shot time.
+.sp
+Example: To start the seismic section 2 seconds before the shot time use
+\f(CR\-\-trace\-offset=\-2\fP. (Note the minus sign! No spaces!)
+.RE
+.sp
+\-\-reduction\-velocity=\fIVELOCITY\fP
+.RS 4
+Add a time delay proportional to the distance between source and receiver to
+every trace in the seismic section. This factor, more commonly known as
+reduction velocity, is given in meters per second. By default, no reduction
+velocity is applied.
+.sp
+The distance between source and receiver point is calculated using the
+coordinates in the project file (see project file section below). Obviously,
+applying a reduction velocity must fail If the project file only contains
+dummy/placeholder coordinates!
+.RE
+.SH "PROJECT FILE"
+.sp
+A project file plays an important role when building shot or receiver
+gathers as it contains a description of experiment setup. Chiefly, these
+are geographic locations as well as time information.
+.sp
+Project files are simple text files where every (non\-comment) line represents
+one source or receiver point of the experiment. The general syntax rules are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+Everything from a \f(CR#\fP character up to the end of line is considered to be
+a comment (and will be ignored by the program).
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+Empty lines are ignored as well.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 3." 4.2
+.\}
+Any sequence of space characters or tab\-stops in a line containing (any)
+text will be interpreted as column separator! The use of spaces inside
+(column) strings is not supported.
+.RE
+.sp
+The number and content of the different columns varies. Lines describing
+seismic sources ("shots") will e.g. contain the location and trigger time
+of the source. Receiver lines, however, describe where and when the
+recorders were operating. The following listing is an example describing
+three blasts (the "seismic sources") carried out during an experiment in
+South Africa.
+.sp
+.if n .RS 4
+.nf
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+# name     lat/lon/elev     ffid      shot time          optional
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+
+S s21  \-33.1968 22.0695 579  1  2005\-11\-17T06:05:01.170  7.5
+S s32  \-33.1882 22.0644 566  2  2005\-11\-17T06:36:29.593  5.0 10
+S s41  \-33.1767 22.0592 540  3  2005\-11\-17T07:12:36.225  7.5
+.fi
+.if n .RE
+.sp
+In detail the columns of source point lines have the following meaning:
+.sp
+Column #1
+.RS 4
+Every source point line \fBmust\fP start with the character \f(CRS\fP in the first
+text column. (The software uses this as indicator to distinguish Source
+point lines from lines describing receiver points.) Capitalization does
+not matter.
+.RE
+.sp
+Column #2
+.RS 4
+The second \fIname\fP column contains an arbitrary text string that makes it
+easier for humans to work with this file. You can place a description of
+the source point here ("at_yellow_house"), mileage along the profile, a
+stake number or anything else you think might be helpful.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+This column is only used for user feedback by \fBcube2segy\fP. Its
+content will not appear in the resulting seismic section. You can
+also just use the same dummy string for each source point line.
+However, the column must exist! Otherwise, the software will get out
+of sync and try to interpret the following \fIlongitude\fP column as
+\fIlatitude\fP, \fIelevation\fP values as \fIlongitudes\fP, etc.)
+.sp .5v
+.RE
+.RE
+.sp
+Column #3, #4, and #5
+.RS 4
+The next three columns define the location of the source point (\fIlatitude\fP,
+\fIlongitude\fP and \fIelevation\fP in that order). Latitude and longitude should be
+given in decimal degrees. Latitudes south of the equator are negative as
+well as longitudes west of Greenwich. Elevation should be given in meters.
+If you don\(cqt have the coordinates of your source points (yet) use some dummy
+values (like 0.0).
+.sp
+The coordinates given here are entered into the trace header of the seismic
+section.
+.sp
+The coordinates are also used to calculate the absolute (i.e. non\-negative)
+distance between source and receiver, which is required when applying a
+seismic reduction velocity to the seismic section. If \f(CR\-\-reduction\-velocity\fP
+option is given at the command line.
+.RE
+.sp
+Column #6
+.RS 4
+The sixth column is the \fIField File Identification\fP (\fIFFID\fP). Every source
+point must have a unique (positive integer) FFID assigned to it. The FFID
+will be entered into the resulting SEG\-Y trace header. Usually, seismic
+processing software will use this number to identify the recorded traces.
+.RE
+.sp
+Column #7
+.RS 4
+The trigger time of the seismic source goes into the seventh column. It
+consists of date and time information given in ISO\-8601 format (example:
+\f(CR2005\-11\-17T16:05:01.170\fP). All programs of the GIPPtools package resolve
+time down to microseconds.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Important
+.ps -1
+.br
+.sp
+Use either character \f(CRT\fP or \f(CR_\fP to concatenate date and time. If
+you use a space character instead, the time information will be
+interpreted as the next (optional) column.
+.sp .5v
+.RE
+.RE
+.sp
+Column #8, #9, ...
+.RS 4
+The date/time information is followed by a variable number of optional
+columns. Unlike the previous columns no placeholder/dummy entry is needed
+if no value is available!
+.sp
+The intended use for these columns is to transport arbitrary, additional
+information that may be required later by further processing steps into the
+resulting seismic section (e.g. "amount of explosives used" or "water depth").
+.sp
+If optional columns are used, the values given are always stored as a 4\-byte
+IEEE\-754 floating point number. The value of the first optional column is
+entered into the 240 byte long SEG\-Y trace header at its end (bytes \fI#237\fP to
+\fI#240\fP). A following second optional value is placed right before the value of
+the first column (bytes \fI#232\fP to \fI#236\fP). The third optional again is placed
+before the second (at \fI#228\fP to \fI#231\fP) and so on.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+If you use to many optional values (there is no hard limit build
+into the software) you will begin to overwrite important fields
+in the SEG\-Y trace header.
+.sp .5v
+.RE
+.RE
+.sp
+Unlike the variable length source point lines, receiver point lines always
+contain exact ten values (columns) describing the equipment used during the
+measurement, when it was recording data and where data loggers were located
+while doing so. The following listing again is an example.
+.sp
+.if n .RS 4
+.nf
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+# name      lat/lon/elev   chan recorder     start      stop
+# \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+
+R rp1  \-33.2133 22.0783 598  1  e3168 p0  2005\-11\-13 2005\-11\-19
+R rp2  \-33.2125 22.0780 598  2  e3168 p1  2005\-11\-13 2005\-11\-19
+R rp3  \-33.2116 22.0777 597  3  e3168 p2  2005\-11\-14 2005\-11\-19
+R rp4  \-33.2110 22.0775 597  4  e3185 p0  2005\-11\-14 2005\-11\-20
+R rp5  \-33.2102 22.0773 595  5  e3185 p1  2005\-11\-14 2005\-11\-20
+R rp6  \-33.2093 22.0769 596  6  e3185 p2  2005\-11\-14 2005\-11\-20
+R rp7  \-33.2083 22.0765 594  7  e3130 p0  2005\-11\-15 2005\-11\-20
+R rp8  \-33.2074 22.0763 594  8  e3130 p1  2005\-11\-15 2005\-11\-20
+R rp9  \-33.2065 22.0760 593  9  e3130 p2  2005\-11\-15 2005\-11\-21
+.fi
+.if n .RE
+.sp
+In detail the columns of receiver point lines have the following meaning:
+.sp
+Column #1
+.RS 4
+Every receiver point line \fBmust\fP start with the character \f(CRR\fP in the first
+column. (The software uses this as indicator to distinguish Receiver point
+lines from lines describing source points.) Capitalization does not matter.
+.RE
+.sp
+Column #2
+.RS 4
+The second \fIname\fP column is an arbitrary text string that makes it easier
+for humans to work with this file. You can place a description of the
+receiver point here ("close_to_big_tree"), mileage along the profile, a
+stake number or anything else you think might be helpful.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+This column is only used for user feedback by \fBcube2segy\fP and its
+content will not appear in the resulting seismic section. You can
+also just use the same dummy string for each receiver point line.
+However, the column must exist! Otherwise, the software will get out of
+sync and try to interpret the following longitude column as latitude,
+elevation values as longitudes, etc.)
+.sp .5v
+.RE
+.RE
+.sp
+Column #3, #4, and #5
+.RS 4
+The next three columns define the location of the receiver point (\fIlatitude\fP,
+\fIlongitude\fP and \fIelevation\fP in that order). Latitude and longitude should be
+given in decimal degrees. Latitudes south of the equator are negative as
+well as longitudes west of Greenwich. Elevation should be given in meters.
+If you don\(cqt have the coordinates of your receiver points (yet) use some
+dummy values (like 0.0).
+.sp
+The coordinates are also used to calculate the absolute (i.e. non\-negative)
+distance between source and receiver, which is required when applying a
+seismic reduction velocity to the seismic section (option
+\f(CR\-\-reduction\-velocity\fP).
+.RE
+.sp
+Column #6
+.RS 4
+The sixth column is the \fIchannel number\fP. Each receiver point of an experiment
+must have a unique positive integer channel number assigned to it. The channel
+number will be entered into the resulting trace header. Usually seismic
+processing software will use this number to identify the recorded traces.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Important
+.ps -1
+.br
+.sp
+Do not confuse this (experiment/profile unique) channel number
+with the instrument recording channel (see column #8).
+.sp .5v
+.RE
+.RE
+.sp
+Column #7 and #8
+.RS 4
+The next two columns are needed to locate the data in recorded files.
+Column seven contains the \fIrecorder unit\fP name used to record the data at.
+At the GIPP this is usually a five character long string like \f(CRe3456\fP or
+\f(CRr6009\fP for EarthData logger.
+.sp
+Column eight is used to indicate the \fIrecording channel\fP of the respective
+recording unit. Possible values are \f(CRp0\fP to \f(CRp2\fP for the (primary) recording
+channels of a three channel Cube data logger.
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Tip
+.ps -1
+.br
+.sp
+If you are unsure about the correct values to enter use the \fBcubeinfo\fP
+utility to inspect your input data. The program can list the "correct"
+recorder unit id and the recorder channel name.
+.sp .5v
+.RE
+.RE
+.sp
+Column #9 and #10
+.RS 4
+The last two columns describe the beginning and end of the recording. They
+consist of date and time information given in ISO\-8601 format (example:
+\f(CR2005\-11\-17T16:05:01.170\fP). Depending on your experiment setup it may be
+enough to give just date information. But if you enter also time of day
+information here, you should at least specify hour and minutes. (Without
+time of day information "midnight" of the respective day is assumed.)
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Important
+.ps -1
+.br
+.sp
+Use \(aq\fIT\fP\(aq or \(aq_\(aq to concatenate date and time. If you use a space
+character instead, the time information will be interpreted
+correctly.
+.sp .5v
+.RE
+.RE
+.SH "ENVIRONMENT"
+.sp
+The following environment variables can optionally be used to influence
+the behavior of the GIPPtool utilities.
+.sp
+GIPPTOOLS_HOME
+.RS 4
+This environment variable is used to find the location of the GIPPtools
+installation directory. In particular, the Java class files that make up the
+GIPPtools are expected to be in the \f(CRjava\fP subdirectory of \fBGIPPTOOLS_HOME\fP.
+.RE
+.sp
+GIPPTOOLS_JAVA
+.RS 4
+The utilities of the GIPPtools are written in the programming language Java
+and consequently need a Java Runtime Environment (JRE) to execute. Use this
+variable to specify the location of the JRE which should be used.
+.RE
+.sp
+GIPPTOOLS_OPTS
+.RS 4
+You can use this environment variable for additional fine\-tuning of the
+Java runtime environment. This is typically used to set the Java heap size
+available to GIPPtool programs.
+.RE
+.sp
+GIPPTOOLS_LEAP
+.RS 4
+The GIPPtools require up\-to\-date leap second information to correctly
+interpret Cube files. Usually, this information is obtained from the
+\f(CRleap\-seconds.list\fP file located in the config subdirectory of the
+GIPPtools installation directory. This environment variable can be used
+to provide a more up\-to\-date leap second list to GIPPtool programs.
+.RE
+.sp
+It is usually not necessary to define any of those variables as suitable
+values should be selected automatically. However, if the automatic detection
+build into the start script fails, or you need to choose between different
+GIPPtool or Java runtime releases installed on your computer, these
+environment variables might become quite helpful to troubleshoot the
+situation.
+.SH "DIAGNOSTICS"
+.sp
+Occasionally, the \fBcube2segy\fP utility will produce user feedback. In general,
+user messages are classified as \fIINFO\fP, \fIWARNING\fP or \fIERROR\fP. The \fIINFO\fP
+messages are only displayed when the \f(CR\-\-verbose\fP command line option is used.
+They usually report about the progress of the program run, give statistical
+information or write a final summary.
+.sp
+More important are \fIWARNING\fP messages. In general, they warn about (possible)
+issues that may influence the outcome. Although the program will continue
+with execution, you certainly should check the results carefully. You might
+not have gotten what you (thought you) asked for. Finally, \fIERROR\fP messages
+inform about problems that can not be resolved automatically. Program
+execution usually stops and the user must fix the cause of the error first.
+.SH "EXIT CODES"
+.sp
+Use the following program exit codes when calling \fBcube2segy\fP from scripts
+or other programs to see if \fBcube2segy\fP finished successfully. Any non\-zero
+code indicates an \fIERROR\fP!
+.sp
+0
+.RS 4
+Success.
+.RE
+.sp
+64
+.RS 4
+Command line syntax or usage error.
+.RE
+.sp
+65
+.RS 4
+Data format error. (The input was not a valid Cube recording.)
+.RE
+.sp
+66
+.RS 4
+An input file did not exist or was not readable.
+.RE
+.sp
+70
+.RS 4
+Error in internal program logic.
+.RE
+.sp
+74
+.RS 4
+I/O error.
+.RE
+.sp
+99
+.RS 4
+Other, unspecified errors.
+.RE
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+To prepare seismic sections use:
+.sp
+.if n .RS 4
+.nf
+cube2segy \-\-shot\-gather \-\-project=example.project ./data/
+.fi
+.if n .RE
+.sp
+This will produce a shot gather for every source point defined in the
+\f(CRexample.project\fP file. The Cube data will be read from the data directory
+and the seismic section will be written to the current working directory.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+Prepare seismic sections for the shots with FFID 2001 and 2002 only.
+.sp
+.if n .RS 4
+.nf
+cube2segy \-\-shot\-gather=2001,2002 \-\-project=example.project ./data/
+.fi
+.if n .RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 3." 4.2
+.\}
+Apply a reduction velocity of 6.5 km/s and shift all traces by half a
+second towards earlier times.
+.sp
+.if n .RS 4
+.nf
+cube2segy \-\-shot\-gather \-\-project=example.project \-\-reduction\-velocity=6500 \-\-trace\-offset=\-0.5 ./data/
+.fi
+.if n .RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 4." 4.2
+.\}
+Create seismic section in the new (XDR) Seismic Unix format
+.sp
+.if n .RS 4
+.nf
+cube2segy \-\-shot\-gather \-\-project=example.project \-\-segy\-format=suxdr ./data/
+.fi
+.if n .RE
+.RE
+.SH "FILES"
+.sp
+$GIPPTOOLS_HOME/bin/cube2segy
+.RS 4
+The \fBcube2segy\fP "program". Usually just a copy of or symbolic link pointing
+to the standard GIPPtools start script.
+.RE
+.sp
+$GIPPTOOLS_HOME/bin/gipptools
+.RS 4
+The GIPPtools start script. Almost all utilities of the GIPPtools package
+are started from this shell script.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgipptools\fP(1), \fBcube2ascii\fP(1), \fBcube2mseed\fP(1), \fBcubeevent\fP(1),
+\fBcubeinfo\fP(1), \fBmseed2ascii\fP(1), \fBmseed2mseed\fP(1), \fBmseed2pdas\fP(1),
+\fBmseed2segy\fP(1), \fBmseedcut\fP(1), \fBmseedinfo\fP(1), \fBmseedrecover\fP(1),
+\fBmseedrename\fP(1)
+.SH "BUGS AND CAVEATS"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+The program does not (yet) support Cartesian coordinate systems. Shot and
+receiver point positions must be given as degrees latitude and degrees
+longitude.
+.RE

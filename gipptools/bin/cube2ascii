@@ -1,0 +1,328 @@
+#! /bin/sh
+# ---------------------------------------------------------------------
+# GIPPtools - A collection of programs for (seismic) data pre-processing.
+#
+# Copyright (C) 2007-2021 Christof Lendl (GFZ Potsdam, lendl@gfz-potsdam.de)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# This shell script functions as a "wrapper" around the various Java
+# command line utilities that are part of the GIPPtools and CubeTools
+# software collection.
+#
+# To use this script simply copy it or create a (soft-) link pointing at
+# this script. The name of each newly created copy or link should be the
+# name of a Java class or utility you intent to call. When executed from
+# the command line, the script will look at it's respective "name" and
+# start the corresponding GIPPtools utility from the JAR file.
+#
+# Please note however that the script makes some basic assumption about
+# the layout of the GIPPtools subdirectories:
+#
+#   $GIPPTOOLS_HOME
+#       \--> bin     .. executables (and location of this script)
+#       \--> java    .. JAR file(s)
+#       \--> man     .. Unix manual pages
+#       \--> doc     .. documentation
+#       \
+#       \--> jre     .. an optional (!!!) Java Runtime Environment (JRE) 
+#                       that can be used to build a self-contained GIPPtool
+#                       installation on e.g. a memory stick when traveling
+#                       (see "find the Java runtime" below for more details) 
+#
+# If you change anything in the GIPPtools directory layout you most
+# likely must modify this script too!
+# ---------------------------------------------------------------------
+
+# --- debugging ---
+# Provide a simple debugging interface. The function 'DEBUG' is intended
+# as an 'echo' replacement that only echos the message if the 'DebugMode'
+# variable is set to "on". The debug mode is enabled if the first (and by
+# first I mean first!) command line argument is '--debug'.
+#
+# Note: Output is re-directed so debugging works with pipes!
+
+DEBUG()
+  {
+    if [ "${DebugMode}" = "on" ]
+    then
+        echo "  DEBUG: $*"  < /dev/null  > /dev/tty  2>&1
+    fi
+  }
+
+
+if [ "$1" = "--debug" ]
+then
+    DebugMode=on
+fi
+
+
+DEBUG "Begin GIPPtools start script."
+DEBUG
+DEBUG "  environment  GIPPTOOLS_JAVA=${GIPPTOOLS_JAVA}"
+DEBUG "  environment  GIPPTOOLS_OPTS=${GIPPTOOLS_OPTS}"
+DEBUG "  environment  GIPPTOOLS_HOME=${GIPPTOOLS_HOME}"
+DEBUG
+
+
+# --- name of the GIPPtools utility ---
+# Obtain the "pure" (file-) name of this script. The name is used below as
+# argument to the '--run-tool=...' command line option that determines which
+# GIPPtools utility will be started from the JAR file.
+
+ToolName=`basename $0`      # the GIPPtools utility that should be started
+
+
+# --- locate GIPPtools installation ---
+# The location of the GIPPtools installation is either given via the
+# shell environment variable  $GIPPTOOLS_HOME  or determined from the
+# location of this script. (See above for assumptions made.)
+#
+# Also, most likely this script is not called directly but instead via
+# some symbolic link. The following code attempts to resolve the symbolic
+# link and hopefully will find the correct location nevertheless!
+
+ MaxHops=8      # maximum number of symbolic links (avoids infinite loops)
+HopCount=0      # current count of symbolic links already followed
+
+if [ -z  "${GIPPTOOLS_HOME}" ]
+then
+    SavedWorkingDir=`pwd`               # save the current work directory
+
+    ToolDir=`dirname $0`
+    Command=`cd ${ToolDir} && pwd`/${ToolName}
+
+    while [ -h "${Command}" ]           # is it a symbolic link?
+    do
+        cd `dirname "${Command}"`       # go to parent directory
+
+        LinkTarget=`LC_ALL=C  ls -l "${Command}" | awk '{print $NF}'`
+
+        if [ -n "${LinkTarget}" ]
+        then
+            if [ "${Command}" != "${LinkTarget}" ]
+            then
+                Command="${LinkTarget}"
+            else                        # direct loop (i.e. "a -> a")
+                echo "                                                  " 1>&2
+                echo "ERROR!  Infinite loop detected!                   " 1>&2
+                echo "                                                  " 1>&2
+                echo "  The last symbolic link processed points to      " 1>&2
+                echo "  itself creating an infinite loop.               " 1>&2
+                echo "                                                  " 1>&2
+                echo "          file:  ${LinkTarget}                    " 1>&2
+                echo "  in directory:  `pwd`                            " 1>&2
+                echo "                                                  " 1>&2
+                exit 1
+            fi
+        else
+            echo "                                                  " 1>&2
+            echo "ERROR!  Could not follow symbolic link!           " 1>&2
+            echo "                                                  " 1>&2
+            echo "  Could not get any information searching for     " 1>&2
+            echo "                                                  " 1>&2
+            echo "          file:  ${LinkTarget}                    " 1>&2
+            echo "  in directory:  `pwd`                            " 1>&2
+            echo "                                                  " 1>&2
+            exit 1;
+        fi
+
+        HopCount=`expr ${HopCount} + 1`
+
+        if [ ${HopCount} -gt ${MaxHops} ]
+        then
+            echo "                                                  " 1>&2
+            echo "ERROR!  Too many symbolic links!                  " 1>&2
+            echo "                                                  " 1>&2
+            echo "  Giving up after following more than ${MaxHops}  " 1>&2
+            echo "  symbolic links. I got as far as resolving       " 1>&2
+            echo "                                                  " 1>&2
+            echo "          file:  ${LinkTarget}                    " 1>&2
+            echo "  in directory:  `pwd`                            " 1>&2
+            echo "                                                  " 1>&2
+            exit 1
+        fi
+    done
+
+    GIPPTOOLS_HOME=`cd \`dirname ${Command}\`/..; pwd`
+
+    cd ${SavedWorkingDir}       # restore the saved, original work directory
+fi
+
+
+if [ ! -d  "${GIPPTOOLS_HOME}" ]
+then
+    echo "                                                  " 1>&2
+    echo "ERROR!  Invalid GIPPtools directory!              " 1>&2
+    echo "                                                  " 1>&2
+    echo "  The GIPPTOOLS_HOME environment variable is not  " 1>&2
+    echo "  set to a directory. The current value is:       " 1>&2
+    echo "                                                  " 1>&2
+    echo "    ${GIPPTOOLS_HOME}                             " 1>&2
+    echo "                                                  " 1>&2
+    exit 1
+fi
+
+
+# --- find the GIPPtools jar-file ---
+# Now that we have the $GIPPTOOLS_HOME finding the JAR file is easy.
+# However, make sure it does exist!
+
+JarFile="${GIPPTOOLS_HOME}/java/tools.jar"
+
+if [ ! -r ${JarFile} ]
+then
+    echo "                                                  " 1>&2
+    echo "ERROR!  Can not read the GIPPtools jar-file!      " 1>&2
+    echo "                                                  " 1>&2
+    echo "  To run the GIPPtools Java utilities, a jar-file " 1>&2
+    echo "  containing the Java code is required. This file " 1>&2
+    echo "  was expected at the location:                   " 1>&2
+    echo "                                                  " 1>&2
+    echo "    ${JarFile}                                    " 1>&2
+    echo "                                                  " 1>&2
+    exit 2
+fi
+
+
+# --- find "the best" Java runtime environment (JRE) ---
+# If the variable $GIPPTOOLS_JAVA is defined use it to locate the JRE. However,
+# if $GIPPTOOLS_JAVA is undefined, try to find a JRE by searching some pre-
+# defined locations.
+#
+# For the second case ("need to find Java"), the variable  $JavaSearchPaths
+# contains a list of additional and/or typical locations for the executable
+# of the Java runtime environment. Feel free to modify this to your needs...
+#
+# Note: The list is searched in order and the last found JRE is deemed to
+# be the most desirable one! (This usually overwrites the value that $JavaBin
+# was initialized with first.)
+#
+# Typical locations you may want to try are:
+#
+#    '/usr/bin/java'
+#
+#        Standard location, usually used by JREs installed via the package 
+#        management software of the operating system (works for SuSE, Debian, 
+#        Solaris 9, and probably also for many others).
+#
+#    '/usr/local/bin/java'
+#
+#        A typical location for manually installed JREs.
+#
+#    '/apps/...'
+#
+#        The local setup used at the GIPP (manually maintained and usually 
+#        more up-to-date than the JRE that comes with the operating system).
+#
+#    '${GIPPTOOLS_HOME}/jre/...'
+#
+#        A JRE installed inside the GIPPtools directory. Use this hack to
+#        build self contained GIPPtools installations (e.g. on an USB memory
+#        stick when traveling) that will also work on machines without locally 
+#        installed Java.
+#
+#        Note: The 'jre' directory inside ${GIPPTOOLS_HOME} is optional! It 
+#              is your responsibility to create the directory and to copy an 
+#              appropriate JRE for your target system into it if you plan to 
+#              use this "hook".
+
+if [ -z  "${GIPPTOOLS_JAVA}" ]
+then
+    JavaSearchPaths="/usr/bin/java                      \
+                     /usr/local/bin/java                \
+                     /apps/jre1.6*/bin/java             \
+                     /apps/jre1.7*/bin/java             \
+                     /apps/jre1.8*/bin/java             \
+                     /apps/jre-9*/bin/java              \
+                     /apps/jre-1*/bin/java              \
+                     /apps/jdk-1*/bin/java              \
+                     ${GIPPTOOLS_HOME}/jre*/bin/java"
+
+
+    JavaBin=`which java  2> /dev/null`  # first, initialize variable with the
+                                        # default JRE provided by your system
+
+    for  File  in  ${JavaSearchPaths}   # next, iterate through the search paths
+    do
+        if [ -x "${File}" ]
+        then
+            JavaBin=${File}             # use a "better" JRE instead
+        fi
+    done
+else
+    JavaBin=${GIPPTOOLS_JAVA}/bin/java  # no searching, simply use the given JRE
+fi
+
+
+if [ ! -x "${JavaBin}" ]
+then
+    echo "                                                  " 1>&2
+    echo "ERROR!  Could not locate Java Runtime!            " 1>&2
+    echo "                                                  " 1>&2
+    echo "  The Java Runtime Environment (JRE) could not be " 1>&2
+    echo "  started because the the file                    " 1>&2
+    echo "                                                  " 1>&2
+    echo "    ${JavaBin}                                    " 1>&2
+    echo "                                                  " 1>&2
+    echo "  could not be found or is not executable.        " 1>&2
+    echo "                                                  " 1>&2
+    echo "  Please ensure that an adequate JRE is installed " 1>&2
+    echo "  on this computer and can be found by this start " 1>&2
+    echo "  script. Then try again..                        " 1>&2
+    echo "                                                  " 1>&2
+    exit 3
+fi
+
+
+# --- Java runtime options ---
+# Use the $GIPPTOOLS_OPTS environment variable to fine-tune the Java runtime.
+# See the manual of your JRE for applicable options.
+#
+# If the environment variable is not set a default of "-Xmx512m' is used.
+#
+#    -Xmx512m .. Limit the maximum memory used by a JRE to roughly half
+#                a gigabyte. (GIPPtools won't need more memory and it is
+#                "good style" to tell the system about it.)
+#
+# Hint: All Java runtime options starting with '-X...' are non-standard
+#       options specific to a JRE implementation! These options are however
+#       portable in the sense that other Java virtual machines are supposed
+#       to simply ignore these options and not throw an error.
+
+if [ ! -z  "${GIPPTOOLS_OPTS}" ]
+then
+  JavaOpt="${GIPPTOOLS_OPTS}"
+else
+  JavaOpt="-Xmx512m"
+fi
+
+
+# --- run program ---
+# Finally, do some work and start the requested utility contained in the
+# Java JAR file.
+
+DEBUG "  Java runtime environment  JavaBin=${JavaBin}"
+DEBUG "  Java runtime options      JavaOpt=${JavaOpt}"
+DEBUG "  GIPPtools JAR file        JarFile=${JarFile}"
+DEBUG "  GIPPtools utility        ToolName=${ToolName}"
+DEBUG
+DEBUG "End of GIPPtools start script. Switching over to Java Runtime now.."
+DEBUG
+
+exec ${JavaBin} ${JavaOpt} -jar ${JarFile} --run-tool=${ToolName} ${1+"$@"}
+
+
+# --- fin -------------------------------------------------------------

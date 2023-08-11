@@ -1,0 +1,435 @@
+'\" t
+.\"     Title: mseedinfo
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2022-12-06
+.\"    Manual: GIPPtools Command Manual
+.\"    Source: Release 2022.340
+.\"  Language: English
+.\"
+.TH "MSEEDINFO" "1" "2022-12-06" "Release 2022.340" "GIPPtools Command Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+mseedinfo \- summarize the content of miniSEED files
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+mseedinfo  [\-v|\-\-verbose] [\-\-include\-pattern=\fIPATTERN\fP]...
+           [\-\-select\-station=\fISTATION\fP]... [\-\-select\-channel=\fICHANNEL\fP]...
+           [\-\-format=\fIFORMAT\fP]
+           [\fIfile\fP | \fIdirectory\fP]...
+.fi
+.br
+.sp
+.sp
+.nf
+mseedinfo  [\-h|\-\-help] [\-\-version] [\-\-sysinfo]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+\fBMseedinfo\fP reads from one or more \fIfiles\fP (or standard input) and reports
+on the miniSEED data contained in the input. If a \fIdirectory\fP is given
+instead, \fBmseedinfo\fP searches recursively for input files inside the
+directory. The search can be restricted to contain only files with a name
+matched by patterns given via one or more \f(CR\-\-include\-pattern\fP options.
+.sp
+The resulting report about the miniSEED data is always written to standard
+output (although the user may redirect the output to a file of course).
+Different predefined output variants (quick overview, detailed summary
+report, checksum, ...) are available can be selected using the \f(CR\-\-format\fP
+option.
+.SH "OPTIONS"
+.sp
+The program pretty much follows expected Unix command line syntax. Some
+command line options have two variants, one long and an additional short one
+(for convenience). These are shown below, separated by commas. However, most
+options only have a long variant. The \(oq\f(CR=\fP\(cq for options that take a
+parameter is required and can not be replaced by a whitespace.
+.sp
+\-h, \-\-help
+.RS 4
+Print a brief summary of all available command line options and exit.
+.RE
+.sp
+\-\-version
+.RS 4
+Print the \fBmseedinfo\fP release information and exit.
+.RE
+.sp
+\-\-sysinfo
+.RS 4
+Provide some basic system information and exit.
+.RE
+.sp
+\-v, \-\-verbose
+.RS 4
+This option increases the amount of information given to the user during
+program execution. By default, (i.e. without this option) \fBmseedinfo\fP only
+reports warnings and errors. (See the diagnostics section below.)
+.RE
+.sp
+\-\-include\-pattern=\fIPATTERN\fP
+.RS 4
+Only process files whose filename matches the given \fIPATTERN\fP. Files with
+a name not matching the search \fIPATTERN\fP will be ignored. This option is
+quite useful to speed up recursive searches through large subdirectory trees
+and can be used more than once in the same command line.
+.sp
+You can use the two wild card characters (\f(CR*\fP and \f(CR?\fP) when specifying a
+\fIPATTERN\fP (e.g. \f(CR*.pri?\fP). Or alternatively, you can also use a predefined
+filter called \f(CRGIPP\fP that can be used to exclude all files not following the
+usual GIPP naming convention for miniSEED files recorded by
+\c
+.URL "http://www.earthdata.co.uk" "Earth Data"
+loggers (e.g. message logging or status files, see examples section below).
+.if n .sp
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Caution
+.ps -1
+.br
+.sp
+The search \fIPATTERN\fP is only applied to the filename part and not
+to the full pathname of a file.
+.sp .5v
+.RE
+.RE
+.sp
+\-\-select\-station=\fISTATION\fP
+.RS 4
+Only process miniSEED records with a matching \fISTATION\fP identifier. Records
+that do not match the \fISTATION\fP expression are ignored/skipped.
+.sp
+This command line option understands the two wild card character \f(CR*\fP and \f(CR?\fP
+and can be used more than once in a command line.
+.RE
+.sp
+\-\-select\-channel=\fICHANNEL\fP
+.RS 4
+Only process miniSEED records with a matching \fICHANNEL\fP identifier. Records
+that do not match the \fICHANNEL\fP expression are ignored/skipped.
+.sp
+This command line option understands the two wild card character \f(CR*\fP and \f(CR?\fP
+and can be used more than once in a command line.
+.RE
+.sp
+\-\-format=\fIFORMAT\fP
+.RS 4
+.sp
+Select one of the predefined output formats:
+.sp
+\fIFILE\fP
+.RS 4
+Produce a separate report about the content of each single miniSEED file
+in the input. (This is also the default output format.)
+.RE
+.sp
+\fIINDEX\fP
+.RS 4
+Short one\-line summary for each single miniSEED record.
+.RE
+.sp
+\fIQUALITY\fP
+.RS 4
+One\-line data quality report for each single miniSEED record.
+.RE
+.sp
+\fIOVERVIEW\fP
+.RS 4
+Write a short, single line overview about each continuous miniSEED stream
+found in the input. Use this output format to obtain a basic idea what data
+some file or directory contains. (Start and stop times are reported without
+sub\-seconds and time spans are approximated.)
+.RE
+.sp
+\fISUMMARY\fP
+.RS 4
+Return a single but more detailed (summary) line for every continuous
+miniSEED input stream. Report times with microsecond precision.
+.RE
+.sp
+\fICHECKSUM\fP
+.RS 4
+Calculate a checksum of each continuous miniSEED input stream found in the
+input. Only the recording time and the absolute value of respective samples
+are considered for the checksum calculation so that different miniSEED
+encoding formats will result in the same checksum.
+.RE
+.sp
+Please note the different scope of the formats: \fIFILE\fP will summarize the
+content of a single file. The formats \fIINDEX\fP and \fIQUALITY\fP will report on
+single individual miniSEED records. And the remaining output formats
+(\fIOVERVIEW\fP, \fISUMMARY\fP and \fICHECKSUM\fP) provide information on continuous
+data streams, possibly spanning many files!
+.RE
+.SH "ENVIRONMENT"
+.sp
+The following environment variables can optionally be used to influence
+the behavior of the GIPPtool utilities.
+.sp
+GIPPTOOLS_HOME
+.RS 4
+This environment variable is used to find the location of the GIPPtools
+installation directory. In particular, the Java class files that make up the
+GIPPtools are expected to be in the \f(CRjava\fP subdirectory of \fBGIPPTOOLS_HOME\fP.
+.RE
+.sp
+GIPPTOOLS_JAVA
+.RS 4
+The utilities of the GIPPtools are written in the programming language Java
+and consequently need a Java Runtime Environment (JRE) to execute. Use this
+variable to specify the location of the JRE which should be used.
+.RE
+.sp
+GIPPTOOLS_OPTS
+.RS 4
+You can use this environment variable for additional fine\-tuning of the
+Java runtime environment. This is typically used to set the Java heap size
+available to GIPPtool programs.
+.RE
+.sp
+It is usually not necessary to define any of those variables as suitable
+values should be selected automatically. However, if the automatic detection
+build into the start script fails, or you need to choose between different
+GIPPtool or Java runtime releases installed on your computer, these
+environment variables might become quite helpful to troubleshoot the
+situation.
+.SH "DIAGNOSTICS"
+.sp
+Occasionally, the \fBmseedinfo\fP utility will produce user feedback. In general,
+user messages are classified as \fIINFO\fP, \fIWARNING\fP or \fIERROR\fP. The \fIINFO\fP
+messages are only displayed when the \f(CR\-\-verbose\fP command line option is used.
+They usually report about the progress of the program run, give statistical
+information or write a final summary.
+.sp
+More important are \fIWARNING\fP messages. In general, they warn about (possible)
+issues that may influence the outcome. Although the program will continue
+with execution, you certainly should check the results carefully. You might
+not have gotten what you (thought you) asked for. Finally, \fIERROR\fP messages
+inform about problems that can not be resolved automatically. Program
+execution usually stops and the user must fix the cause of the error first.
+.SH "EXIT CODES"
+.sp
+Use the following program exit codes when calling \fBmseedinfo\fP from scripts
+or other programs to see if \fBmseedinfo\fP finished successfully. Any non\-zero
+code indicates an \fIERROR\fP!
+.sp
+0
+.RS 4
+Success.
+.RE
+.sp
+64
+.RS 4
+Command line syntax or usage error.
+.RE
+.sp
+65
+.RS 4
+Data format error. (The input was not a valid miniSEED file.)
+.RE
+.sp
+66
+.RS 4
+An input file did not exist or was not readable.
+.RE
+.sp
+70
+.RS 4
+Error in internal program logic.
+.RE
+.sp
+74
+.RS 4
+I/O error.
+.RE
+.sp
+99
+.RS 4
+Other, unspecified errors.
+.RE
+.SH "EXAMPLES"
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 1." 4.2
+.\}
+To see the content of a single file you could use one of the following
+variations:
+.sp
+.if n .RS 4
+.nf
+mseedinfo  input.mseed
+.fi
+.if n .RE
+.sp
+.if n .RS 4
+.nf
+mseedinfo  input.mseed | more
+.fi
+.if n .RE
+.sp
+.if n .RS 4
+.nf
+cat input.mseed | mseedinfo > content.txt
+.fi
+.if n .RE
+.sp
+The first command will write directly to the console. The second will
+use the pager program \f(CRmore\fP to display the result. And the last variant
+will save the report of the \f(CRinput.mseed\fP file to the \f(CRcontent.txt\fP file.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 2." 4.2
+.\}
+To get a quick idea what miniSEED data is contained in the directory
+\f(CReh\-1234/040\fP use:
+.sp
+.if n .RS 4
+.nf
+mseedinfo \-\-format=OVERVIEW  eh\-1234/040/*.pri?
+.fi
+.if n .RE
+.sp
+Ideally this will return as many lines summarizing miniSEED data as
+there are EDL channels used to record the data. However, sometimes there
+will be two or more text lines per recording channel. This indicates
+that there are gaps or overlaps in the otherwise continuous miniSEED
+data.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.  sp -1
+.  IP " 3." 4.2
+.\}
+To get a more detailed overview ("index") over each miniSEED record
+(primary channels only) in directory eh\-1234 on February 9th (day\-of
+year 040) you would use:
+.sp
+.if n .RS 4
+.nf
+mseedinfo \-\-format=INDEX  eh\-1234/040/*.pri?
+.fi
+.if n .RE
+.sp
+Alternatively you could also work with a pattern: (Do not forget the single
+quotes around the pattern as it contains wild cards you do not want expanded
+by the Unix shell!)
+.sp
+.if n .RS 4
+.nf
+mseedinfo \-\-format=INDEX \-\-include\-pattern=\(aq*.pri?\(aq  eh\-1234/040
+.fi
+.if n .RE
+.sp
+Or, instead of manually specifying a  pattern, rely on the build in GIPP
+pattern:
+.sp
+.if n .RS 4
+.nf
+mseedinfo \-\-format=INDEX \-\-include\-pattern=GIPP  eh\-1234/040
+.fi
+.if n .RE
+.sp
+The predefined GIPP pattern assumes that the miniSEED files follow the
+GIPP naming convention for miniSEED files produced by EDLs. (All EDL
+miniSEED filenames start with a five character EDL unit id followed by a
+data and time stamp. The file extension indicates the recording channel.
+Example: \f(CRe3357080209143000.pri0\fP)
+.RE
+.SH "FILES"
+.sp
+$GIPPTOOLS_HOME/bin/mseedinfo
+.RS 4
+The \fBmseedinfo\fP "program". Usually just a copy of or symbolic link pointing
+to the standard GIPPtools start script.
+.RE
+.sp
+$GIPPTOOLS_HOME/bin/gipptools
+.RS 4
+The GIPPtools start script. Almost all utilities of the GIPPtools package
+are started from this shell script.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBgipptools\fP(1), \fBcube2ascii\fP(1), \fBcube2mseed\fP(1), \fBcube2segy\fP(1),
+\fBcubeevent\fP(1), \fBcubeinfo\fP(1), \fBmseed2ascii\fP(1), \fBmseed2mseed\fP(1),
+\fBmseed2pdas\fP(1), \fBmseed2segy\fP(1), \fBmseedcut\fP(1), \fBmseedrecover\fP(1),
+\fBmseedrename\fP(1)
+.SH "BUGS AND CAVEATS"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+MiniSEED files containing \fIASCII encoded\fP records are problematic.
+There is no standard how the text contained in those records should be
+structured. Also, such records often contain logging information,
+recorder configurations or other metadata instead of data samples.
+.br
+Another problem is that not every field in a miniSEED record header
+makes sense for every encoded information. (What would be the correct
+sample rate setting for a record containing configuration data?)
+.br
+Consequently, reports on \fIASCII encoded\fP miniSEED records will lack
+details!
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+Working with multiplexed miniSEED files will lead to cluttered reports!
+The \fBmseedinfo\fP utility processes files sequentially and reports as it
+reads the miniSEED records.
+.br
+So, increasingly entangled input data streams will lead to more and more
+"complex" reports. However, you can mitigate the issue somewhat by using
+the \f(CR\-\-select\-channel\fP command line option.
+.RE
