@@ -1,3 +1,5 @@
+#cut the earthquakes waveforms according to the events catalog file 
+
 import os
 import sys
 import glob
@@ -12,7 +14,7 @@ stats=['TRIS']
 chans=['BHZ','BHE','BHN']
 #chans=['HHZ','HH1','HH2','HDH']
 #chans=['HHZ','HHE','HHN']
-dataless = '../response/ISOLDE-1.dataless'
+dataless = '../response/ISOLDE-1.dataless' 
 
 for stat in stats:
   print ('Station: '+stat)
